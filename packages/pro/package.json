@@ -1,0 +1,47 @@
+{
+  "name": "@duck_ui/pro",
+  "version": "0.1.0",
+  "description": "Pro features for Duck-UI (license-gated)",
+  "author": "Duck-UI",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ibero-data/duck-ui-embed",
+    "directory": "packages/pro"
+  },
+  "homepage": "https://github.com/ibero-data/duck-ui-embed",
+  "bugs": "https://github.com/ibero-data/duck-ui-embed/issues",
+  "keywords": ["duckdb", "analytics", "react", "embed", "dashboard"],
+  "sideEffects": false,
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "test": "vitest run",
+    "lint": "tsc --noEmit",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@duck_ui/core": "workspace:*",
+    "@duck_ui/charts": "workspace:*",
+    "@duck_ui/components": "workspace:*"
+  },
+  "peerDependencies": {
+    "react": ">=18",
+    "react-dom": ">=18",
+    "@duckdb/duckdb-wasm": ">=1.28.0"
+  },
+  "files": ["dist"],
+  "license": "SEE LICENSE IN LICENSE.md"
+}
