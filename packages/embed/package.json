@@ -1,7 +1,7 @@
 {
   "name": "@duck_ui/embed",
-  "version": "0.1.8",
-  "description": "All-in-one embeddable analytics powered by DuckDB-WASM",
+  "version": "0.2.0",
+  "description": "Drop-in SQL-powered React components backed by DuckDB-WASM",
   "author": "Duck-UI",
   "repository": {
     "type": "git",
@@ -10,7 +10,7 @@
   },
   "homepage": "https://github.com/ibero-data/duck-ui-embed",
   "bugs": "https://github.com/ibero-data/duck-ui-embed/issues",
-  "keywords": ["duckdb", "analytics", "react", "embed", "dashboard"],
+  "keywords": ["duckdb", "analytics", "react", "embed", "dashboard", "sql", "charts"],
   "sideEffects": false,
   "publishConfig": {
     "access": "public"
@@ -29,17 +29,18 @@
     "build": "tsup",
     "dev": "tsup --watch",
     "lint": "tsc --noEmit",
+    "test": "vitest run",
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@duck_ui/core": "^0.1.8",
-    "@duck_ui/charts": "^0.1.8",
-    "@duck_ui/components": "^0.1.8"
+    "uplot": "^1.6.31",
+    "zustand": "^4.5.0",
+    "@tanstack/react-table": "^8.21.3"
   },
   "peerDependencies": {
     "react": ">=18",
     "react-dom": ">=18",
-    "@duckdb/duckdb-wasm": "1.33.1-dev19.0"
+    "@duckdb/duckdb-wasm": ">=1.28.0"
   },
   "files": ["dist", "README.md", "LICENSE"],
   "license": "Apache-2.0"

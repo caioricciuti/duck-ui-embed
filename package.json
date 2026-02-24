@@ -2,7 +2,7 @@
   "name": "duck-ui-embed",
   "private": true,
   "workspaces": [
-    "packages/*"
+    "packages/embed"
   ],
   "scripts": {
     "build": "turbo build",
@@ -16,16 +16,15 @@
     "generate-license": "bun scripts/generate-license.ts"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "jsdom": "^28.1.0",
+    "tsup": "^8",
     "turbo": "^2",
     "typescript": "^5.5",
-    "tsup": "^8",
-    "vitest": "^2",
-    "@types/react": "^19",
-    "@types/react-dom": "^19"
+    "vitest": "^2"
   },
-  "packageManager": "bun@1.3.9",
-  "dependencies": {
-    "@tanstack/react-table": "^8.21.3",
-    "@tanstack/react-virtual": "^3.13.18"
-  }
+  "packageManager": "bun@1.3.9"
 }

@@ -41,3 +41,4 @@ bun.lockb
 # The *.pem rule above already covers these, but explicit for clarity
 /scripts
 PUBLISH.md
+CLAUDE.md
