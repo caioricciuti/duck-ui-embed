@@ -2,6 +2,7 @@ import type * as duckdb from '@duckdb/duckdb-wasm'
 import type { SourceConfig } from './types'
 import { FileSource } from './file'
 import { URLSource } from './url'
+import { GatewaySource } from './gateway'
 import { SourceLoadError } from '../errors'
 
 export class SourceLoader {
@@ -18,9 +19,13 @@ export class SourceLoader {
         case 'url':
           await URLSource.load(db, conn, source)
           break
-        case 's3':
-        case 'database':
-          throw new Error(`${source.type} sources require @duck_ui/pro`)
+        case 'gateway':
+        case 'postgres':
+        case 'mysql':
+        case 'clickhouse':
+        case 'bigquery':
+          await GatewaySource.load(db, conn, source)
+          break
         default:
           throw new Error(`Unknown source type: ${(source as SourceConfig).type}`)
       }

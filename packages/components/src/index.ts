@@ -1,8 +1,8 @@
 // Provider
 export { DuckProvider } from './provider/DuckProvider'
-export { useDuck, useQuery, useSchema } from './provider/hooks'
+export { useDuck, useQuery, usePaginatedQuery, useSchema } from './provider/hooks'
 export type { DuckConfig } from './provider/DuckProvider'
-export type { UseQueryResult, UseQueryOptions } from './provider/hooks'
+export type { UseQueryResult, UseQueryOptions, UsePaginatedQueryResult, UsePaginatedQueryOptions } from './provider/hooks'
 export type { DuckContextValue } from './provider/context'
 
 // Table

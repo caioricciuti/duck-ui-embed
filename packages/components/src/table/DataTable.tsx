@@ -1,17 +1,12 @@
-import { useState, useRef, useMemo } from 'react'
+import { useState, useRef, useMemo, useCallback } from 'react'
 import {
   useReactTable,
   getCoreRowModel,
-  getSortedRowModel,
-  getPaginationRowModel,
   flexRender,
   type ColumnDef,
-  type SortingState,
   type ColumnResizeMode,
 } from '@tanstack/react-table'
-import { useVirtualizer } from '@tanstack/react-virtual'
-import { useQuery } from '../provider/hooks'
-import type { UseQueryOptions } from '../provider/hooks'
+import { usePaginatedQuery } from '../provider/hooks'
 import type { ColumnInfo } from '@duck_ui/core'
 import { Loading } from '../shared/Loading'
 import { ErrorDisplay } from '../shared/Error'
@@ -32,8 +27,6 @@ export interface DataTableProps {
   sortable?: boolean
   /** Enable column resizing */
   resizable?: boolean
-  /** Row count threshold to enable virtualisation (default 200) */
-  virtualizeThreshold?: number
   /** Custom className on the root wrapper */
   className?: string
   /** Table name for filter injection */
@@ -185,7 +178,7 @@ const selectStyle: React.CSSProperties = {
 // Sub-components
 // ---------------------------------------------------------------------------
 
-function SortIndicator({ direction }: { direction: 'asc' | 'desc' | false }) {
+function SortIndicator({ direction }: { direction: 'asc' | 'desc' | null }) {
   if (!direction) {
     return (
       <span style={{ fontSize: 10, color: '#d1d5db', marginLeft: 4 }}>
@@ -209,67 +202,71 @@ export function DataTable({
   pageSize: initialPageSize = 25,
   sortable = true,
   resizable = true,
-  virtualizeThreshold = 200,
   className,
   tableName,
   striped = true,
   maxHeight,
 }: DataTableProps) {
-  const queryOpts: UseQueryOptions | undefined = tableName
-    ? { tableName }
-    : undefined
-  const { data, loading, error } = useQuery(sql, queryOpts)
+  // Pagination state
+  const [pageIndex, setPageIndex] = useState(0)
+  const [currentPageSize, setCurrentPageSize] = useState(initialPageSize)
 
-  const [sorting, setSorting] = useState<SortingState>([])
+  // Sort state (SQL-level sorting)
+  const [orderBy, setOrderBy] = useState<{
+    column: string
+    direction: 'asc' | 'desc'
+  } | undefined>(undefined)
+
   const [columnResizeMode] = useState<ColumnResizeMode>('onChange')
   const [hoveredResizer, setHoveredResizer] = useState<string | null>(null)
 
-  // Build column definitions from QueryResult
+  // SQL-level paginated query
+  const { rows, columns: queryColumns, totalRows, loading, error } =
+    usePaginatedQuery(sql, {
+      page: pageIndex,
+      pageSize: currentPageSize,
+      orderBy,
+      tableName,
+    })
+
+  // Build column definitions from query result
   const columns = useMemo<ColumnDef<RowData, unknown>[]>(
-    () => (data ? buildColumns(data.columns) : []),
-    [data],
+    () => buildColumns(queryColumns),
+    [queryColumns],
   )
 
-  const rows = useMemo<RowData[]>(() => data?.rows ?? [], [data])
+  // Handle sort click
+  const handleSort = useCallback(
+    (columnName: string) => {
+      if (!sortable) return
+      setOrderBy((prev) => {
+        if (prev?.column === columnName) {
+          if (prev.direction === 'asc') return { column: columnName, direction: 'desc' }
+          // If already desc, clear sort
+          return undefined
+        }
+        return { column: columnName, direction: 'asc' }
+      })
+      // Reset to first page when sort changes
+      setPageIndex(0)
+    },
+    [sortable],
+  )
 
-  const shouldVirtualize = rows.length > virtualizeThreshold
-
-  // Table instance
+  // Table instance (no client-side sorting/pagination — handled by SQL)
   const table = useReactTable<RowData>({
     data: rows,
     columns,
-    state: { sorting },
-    onSortingChange: setSorting,
     getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    // Only enable client-side pagination when NOT virtualising
-    ...(shouldVirtualize
-      ? {}
-      : { getPaginationRowModel: getPaginationRowModel() }),
     columnResizeMode,
-    enableSorting: sortable,
+    enableSorting: false, // sorting handled via SQL
     enableColumnResizing: resizable,
-    initialState: {
-      pagination: {
-        pageSize: initialPageSize,
-      },
-    },
   })
 
-  // Virtualisation refs
+  // Virtualisation ref (for scroll container)
   const scrollContainerRef = useRef<HTMLDivElement>(null)
-  const ROW_HEIGHT = 40
 
-  const allRows = table.getRowModel().rows
-  const virtualizer = useVirtualizer({
-    count: shouldVirtualize ? allRows.length : 0,
-    getScrollElement: () => scrollContainerRef.current,
-    estimateSize: () => ROW_HEIGHT,
-    overscan: 20,
-    enabled: shouldVirtualize,
-  })
-
-  // ----- Column widths (for resize tracking) -----
+  // Column widths (for resize tracking)
   const columnSizeVars = useMemo(() => {
     const headers = table.getFlatHeaders()
     const vars: Record<string, string> = {}
@@ -281,122 +278,21 @@ export function DataTable({
   }, [table.getState().columnSizingInfo, table.getState().columnSizing])
 
   // ----- Loading / Error / Empty -----
-  if (loading) return <Loading />
+  if (loading && rows.length === 0) return <Loading />
   if (error) return <ErrorDisplay error={error} />
-  if (!data || data.rowCount === 0) return <EmptyState />
+  if (!loading && rows.length === 0 && totalRows === 0) return <EmptyState />
 
   // ----- Derived pagination info -----
-  const pageIndex = table.getState().pagination.pageIndex
-  const currentPageSize = table.getState().pagination.pageSize
-  const totalRows = shouldVirtualize ? rows.length : table.getFilteredRowModel().rows.length
-  const pageCount = shouldVirtualize ? 1 : table.getPageCount()
-  const rangeStart = shouldVirtualize ? 1 : pageIndex * currentPageSize + 1
-  const rangeEnd = shouldVirtualize ? totalRows : Math.min((pageIndex + 1) * currentPageSize, totalRows)
+  const pageCount = Math.max(1, Math.ceil(totalRows / currentPageSize))
+  const rangeStart = totalRows === 0 ? 0 : pageIndex * currentPageSize + 1
+  const rangeEnd = Math.min((pageIndex + 1) * currentPageSize, totalRows)
+  const canPreviousPage = pageIndex > 0
+  const canNextPage = pageIndex < pageCount - 1
 
   // ----- Scroll container height -----
-  const scrollHeight =
-    maxHeight != null
-      ? typeof maxHeight === 'number'
-        ? maxHeight
-        : maxHeight
-      : shouldVirtualize
-        ? 600
-        : undefined
-
-  // ----- Render rows -----
-  const renderRows = () => {
-    if (shouldVirtualize) {
-      const virtualItems = virtualizer.getVirtualItems()
-      const totalSize = virtualizer.getTotalSize()
-
-      return (
-        <tbody>
-          {/* Top spacer */}
-          {virtualItems.length > 0 && (
-            <tr>
-              <td
-                style={{ height: virtualItems[0].start, padding: 0, border: 'none' }}
-                colSpan={columns.length}
-              />
-            </tr>
-          )}
-          {virtualItems.map((virtualRow) => {
-            const row = allRows[virtualRow.index]
-            const isEven = virtualRow.index % 2 === 0
-            return (
-              <tr
-                key={row.id}
-                data-index={virtualRow.index}
-                style={{
-                  height: ROW_HEIGHT,
-                  background: striped && !isEven ? '#f9fafb' : '#fff',
-                }}
-              >
-                {row.getVisibleCells().map((cell) => (
-                  <td
-                    key={cell.id}
-                    style={{
-                      ...tdBaseStyle,
-                      width: `var(--col-${cell.column.id}-size)`,
-                      maxWidth: `var(--col-${cell.column.id}-size)`,
-                    }}
-                    title={String(cell.getValue() ?? '')}
-                  >
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                ))}
-              </tr>
-            )
-          })}
-          {/* Bottom spacer */}
-          {virtualItems.length > 0 && (
-            <tr>
-              <td
-                style={{
-                  height: totalSize - (virtualItems[virtualItems.length - 1].end),
-                  padding: 0,
-                  border: 'none',
-                }}
-                colSpan={columns.length}
-              />
-            </tr>
-          )}
-        </tbody>
-      )
-    }
-
-    // Non-virtual: render paginated rows
-    return (
-      <tbody>
-        {table.getRowModel().rows.map((row, i) => (
-          <tr
-            key={row.id}
-            style={{
-              background: striped && i % 2 === 1 ? '#f9fafb' : '#fff',
-              transition: 'background 0.1s',
-            }}
-          >
-            {row.getVisibleCells().map((cell) => (
-              <td
-                key={cell.id}
-                style={{
-                  ...tdBaseStyle,
-                  width: `var(--col-${cell.column.id}-size)`,
-                  maxWidth: `var(--col-${cell.column.id}-size)`,
-                }}
-                title={String(cell.getValue() ?? '')}
-              >
-                {flexRender(cell.column.columnDef.cell, cell.getContext())}
-              </td>
-            ))}
-          </tr>
-        ))}
-      </tbody>
-    )
-  }
-
-  // ----- Pagination controls (not shown during virtualisation) -----
-  const showPagination = !shouldVirtualize && pageCount > 1
+  const scrollHeight = maxHeight != null
+    ? (typeof maxHeight === 'number' ? maxHeight : maxHeight)
+    : undefined
 
   return (
     <div className={className} style={rootStyle}>
@@ -408,7 +304,6 @@ export function DataTable({
           overflowY: 'auto',
           flex: '1 1 auto',
           ...(scrollHeight != null ? { maxHeight: scrollHeight } : {}),
-          // Inject CSS custom properties for column widths
           ...columnSizeVars,
         } as React.CSSProperties}
       >
@@ -424,10 +319,10 @@ export function DataTable({
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
-                  const canSort = header.column.getCanSort()
-                  const sorted = header.column.getIsSorted()
                   const canResize = header.column.getCanResize()
                   const isResizing = header.column.getIsResizing()
+                  const isSorted = orderBy?.column === header.column.id
+                  const sortDir = isSorted ? orderBy!.direction : null
 
                   return (
                     <th
@@ -437,9 +332,9 @@ export function DataTable({
                         width: `var(--header-${header.id}-size)`,
                         position: 'sticky',
                         top: 0,
-                        cursor: canSort ? 'pointer' : 'default',
+                        cursor: sortable ? 'pointer' : 'default',
                       }}
-                      onClick={canSort ? header.column.getToggleSortingHandler() : undefined}
+                      onClick={sortable ? () => handleSort(header.column.id) : undefined}
                     >
                       <span
                         style={{
@@ -450,7 +345,7 @@ export function DataTable({
                         {header.isPlaceholder
                           ? null
                           : flexRender(header.column.columnDef.header, header.getContext())}
-                        {canSort && <SortIndicator direction={sorted} />}
+                        {sortable && <SortIndicator direction={sortDir} />}
                       </span>
 
                       {/* Resize handle */}
@@ -478,25 +373,76 @@ export function DataTable({
             ))}
           </thead>
 
-          {renderRows()}
+          <tbody>
+            {table.getRowModel().rows.map((row, i) => (
+              <tr
+                key={row.id}
+                style={{
+                  background: striped && i % 2 === 1 ? '#f9fafb' : '#fff',
+                  transition: 'background 0.1s',
+                }}
+              >
+                {row.getVisibleCells().map((cell) => (
+                  <td
+                    key={cell.id}
+                    style={{
+                      ...tdBaseStyle,
+                      width: `var(--col-${cell.column.id}-size)`,
+                      maxWidth: `var(--col-${cell.column.id}-size)`,
+                    }}
+                    title={String(cell.getValue() ?? '')}
+                  >
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
         </table>
       </div>
 
+      {/* Loading overlay for page transitions */}
+      {loading && rows.length > 0 && (
+        <div
+          style={{
+            ...paginationBarStyle,
+            justifyContent: 'center',
+            borderTop: 'none',
+            padding: '4px 14px',
+            background: '#eff6ff',
+            color: '#2563eb',
+            fontSize: 12,
+          }}
+        >
+          Loading...
+        </div>
+      )}
+
       {/* Pagination bar */}
-      {showPagination && (
+      {totalRows > 0 && (
         <div style={paginationBarStyle}>
           <span style={{ color: '#6b7280' }}>
-            Showing {rangeStart}&ndash;{rangeEnd} of {totalRows} rows
+            Showing {rangeStart}&ndash;{rangeEnd} of{' '}
+            {totalRows.toLocaleString()} rows
           </span>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             {/* Page size selector */}
-            <label style={{ display: 'flex', alignItems: 'center', gap: 4, color: '#6b7280', fontSize: 13 }}>
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 4,
+                color: '#6b7280',
+                fontSize: 13,
+              }}
+            >
               Rows:
               <select
                 value={currentPageSize}
                 onChange={(e) => {
-                  table.setPageSize(Number(e.target.value))
+                  setCurrentPageSize(Number(e.target.value))
+                  setPageIndex(0)
                 }}
                 style={selectStyle}
               >
@@ -509,43 +455,41 @@ export function DataTable({
             </label>
 
             {/* Page indicator */}
-            <span style={{ color: '#6b7280', fontSize: 13, minWidth: 80, textAlign: 'center' }}>
+            <span
+              style={{
+                color: '#6b7280',
+                fontSize: 13,
+                minWidth: 80,
+                textAlign: 'center',
+              }}
+            >
               Page {pageIndex + 1} of {pageCount}
             </span>
 
             {/* Navigation buttons */}
             <button
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
+              onClick={() => setPageIndex((p) => Math.max(0, p - 1))}
+              disabled={!canPreviousPage}
               style={{
                 ...paginationButtonStyle,
-                opacity: table.getCanPreviousPage() ? 1 : 0.5,
-                cursor: table.getCanPreviousPage() ? 'pointer' : 'not-allowed',
+                opacity: canPreviousPage ? 1 : 0.5,
+                cursor: canPreviousPage ? 'pointer' : 'not-allowed',
               }}
             >
               Previous
             </button>
             <button
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
+              onClick={() => setPageIndex((p) => Math.min(pageCount - 1, p + 1))}
+              disabled={!canNextPage}
               style={{
                 ...paginationButtonStyle,
-                opacity: table.getCanNextPage() ? 1 : 0.5,
-                cursor: table.getCanNextPage() ? 'pointer' : 'not-allowed',
+                opacity: canNextPage ? 1 : 0.5,
+                cursor: canNextPage ? 'pointer' : 'not-allowed',
               }}
             >
               Next
             </button>
           </div>
-        </div>
-      )}
-
-      {/* Row count footer for virtualised mode */}
-      {shouldVirtualize && (
-        <div style={{ ...paginationBarStyle, justifyContent: 'center' }}>
-          <span style={{ color: '#6b7280' }}>
-            {totalRows.toLocaleString()} rows (virtualised)
-          </span>
         </div>
       )}
     </div>

@@ -1,5 +1,14 @@
 export type FileFormat = 'parquet' | 'csv' | 'json' | 'arrow'
 
+export interface CsvOptions {
+  /** Column delimiter (default: auto-detect) */
+  delimiter?: string
+  /** Whether the file has a header row (default: true) */
+  header?: boolean
+  /** Quote character (default: '"') */
+  quote?: string
+}
+
 export interface FileSourceConfig {
   type: 'file'
   /** Name to register this source as (becomes the table name) */
@@ -10,6 +19,10 @@ export interface FileSourceConfig {
   format: FileFormat
   /** Table name override (defaults to name) */
   tableName?: string
+  /** Maximum rows to load (applies LIMIT during table creation) */
+  maxRows?: number
+  /** CSV-specific options (only used when format is 'csv') */
+  csvOptions?: CsvOptions
 }
 
 export interface URLSourceConfig {
@@ -18,32 +31,60 @@ export interface URLSourceConfig {
   name: string
   /** URL to fetch the file from */
   url: string
-  /** File format (auto-detected from URL extension if not provided) */
+  /** File format (auto-detected from URL extension or Content-Type if not provided) */
   format?: FileFormat
   /** Table name override */
   tableName?: string
+  /** Maximum rows to load (applies LIMIT during table creation) */
+  maxRows?: number
+  /** CSV-specific options (only used when format is 'csv') */
+  csvOptions?: CsvOptions
 }
 
-export interface S3SourceConfig {
-  type: 's3'
+/** Base interface for all gateway-like source configs */
+export interface BaseGatewayConfig {
   name: string
-  bucket: string
-  key: string
-  region: string
+  /** URL of the data gateway API endpoint */
+  endpoint: string
+  /** Query or command to send to the gateway */
+  query?: string
+  /** Expected response format (default: 'json') */
   format?: FileFormat
+  /** Custom HTTP headers (e.g. Authorization) */
+  headers?: Record<string, string>
+  /** HTTP method (default: 'POST') */
+  method?: 'GET' | 'POST'
+  /** Table name override */
   tableName?: string
+  /** Maximum rows to load */
+  maxRows?: number
 }
 
-export interface DatabaseSourceConfig {
-  type: 'database'
-  name: string
-  connectionString: string
-  query: string
-  tableName?: string
+export interface GatewaySourceConfig extends BaseGatewayConfig {
+  type: 'gateway'
+}
+
+export interface PostgresSourceConfig extends BaseGatewayConfig {
+  type: 'postgres'
+}
+
+export interface MySQLSourceConfig extends BaseGatewayConfig {
+  type: 'mysql'
+}
+
+export interface ClickHouseSourceConfig extends BaseGatewayConfig {
+  type: 'clickhouse'
+}
+
+export interface BigQuerySourceConfig extends BaseGatewayConfig {
+  type: 'bigquery'
 }
 
 export type SourceConfig =
   | FileSourceConfig
   | URLSourceConfig
-  | S3SourceConfig
-  | DatabaseSourceConfig
+  | GatewaySourceConfig
+  | PostgresSourceConfig
+  | MySQLSourceConfig
+  | ClickHouseSourceConfig
+  | BigQuerySourceConfig

@@ -1,62 +1,55 @@
 import type * as duckdb from '@duckdb/duckdb-wasm'
-import type { URLSourceConfig, FileFormat } from './types'
+import type { BaseGatewayConfig, FileFormat } from './types'
 import { FileSource } from './file'
 
-export class URLSource {
+export class GatewaySource {
   static async load(
     db: duckdb.AsyncDuckDB,
     conn: duckdb.AsyncDuckDBConnection,
-    config: URLSourceConfig
+    config: BaseGatewayConfig
   ): Promise<void> {
     const tableName = config.tableName ?? config.name
+    const method = config.method ?? 'POST'
 
-    // Fetch the file
-    const response = await fetch(config.url)
-    if (!response.ok) {
-      throw new Error(`Failed to fetch ${config.url}: ${response.statusText}`)
+    const headers: Record<string, string> = {
+      'Accept': 'application/json, text/csv, application/octet-stream',
+      ...config.headers,
     }
 
-    // Detect format: explicit config > URL extension > Content-Type header > csv fallback
+    const fetchOptions: RequestInit = { method, headers }
+
+    if (method === 'POST') {
+      headers['Content-Type'] = headers['Content-Type'] ?? 'application/json'
+      fetchOptions.body = JSON.stringify({ query: config.query })
+    }
+
+    const response = await fetch(config.endpoint, fetchOptions)
+    if (!response.ok) {
+      throw new Error(
+        `Gateway request failed: ${response.status} ${response.statusText}`
+      )
+    }
+
+    // Detect format from config or response Content-Type
     const format =
       config.format ??
-      URLSource.detectFormatFromUrl(config.url) ??
-      URLSource.detectFormatFromContentType(response.headers.get('content-type')) ??
-      'csv'
+      GatewaySource.detectFormatFromContentType(
+        response.headers.get('content-type'),
+      ) ??
+      'json'
 
     const buffer = new Uint8Array(await response.arrayBuffer())
     const fileName = `${config.name}.${format}`
 
     await db.registerFileBuffer(fileName, buffer)
 
-    // Create table using appropriate reader (reuse FileSource.buildCreateSQL)
     const sql = FileSource.buildCreateSQL(
       tableName,
       fileName,
       format,
       config.maxRows,
-      config.csvOptions,
     )
     await conn.query(sql)
-  }
-
-  private static detectFormatFromUrl(url: string): FileFormat | null {
-    const ext = url.split('.').pop()?.toLowerCase().split('?')[0]
-    switch (ext) {
-      case 'parquet':
-        return 'parquet'
-      case 'csv':
-      case 'tsv':
-        return 'csv'
-      case 'json':
-      case 'jsonl':
-      case 'ndjson':
-        return 'json'
-      case 'arrow':
-      case 'ipc':
-        return 'arrow'
-      default:
-        return null
-    }
   }
 
   private static detectFormatFromContentType(

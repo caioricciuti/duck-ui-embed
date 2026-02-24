@@ -82,6 +82,115 @@ export function useQuery(sql: string, options?: UseQueryOptions): UseQueryResult
   return { data, loading, error, refetch: execute, effectiveSql }
 }
 
+// ---------------------------------------------------------------------------
+// Paginated query hook — SQL-level LIMIT/OFFSET pagination
+// ---------------------------------------------------------------------------
+
+export interface UsePaginatedQueryOptions {
+  /** Current page index (0-based) */
+  page: number
+  /** Number of rows per page */
+  pageSize: number
+  /** Sort column and direction */
+  orderBy?: { column: string; direction: 'asc' | 'desc' }
+  /** Table name for filter injection */
+  tableName?: string
+  /** Skip filter injection */
+  noFilter?: boolean
+}
+
+export interface UsePaginatedQueryResult {
+  /** Rows for the current page */
+  rows: Record<string, unknown>[]
+  /** Column metadata */
+  columns: QueryResult['columns']
+  /** Total number of rows matching the query */
+  totalRows: number
+  /** Whether any query is in progress */
+  loading: boolean
+  /** Error from the most recent query */
+  error: Error | null
+  /** Re-run the query */
+  refetch: () => void
+}
+
+export function usePaginatedQuery(
+  sql: string,
+  options: UsePaginatedQueryOptions
+): UsePaginatedQueryResult {
+  const { executor, status, filters, filterVersion, registry, cache } = useDuck()
+
+  // Build effective SQL with filters applied
+  const baseSql = useMemo(() => {
+    if (options.noFilter) return sql
+    const activeFilters = Object.fromEntries(
+      Object.entries(filters).filter(([_, v]) => v !== null && v !== undefined)
+    )
+    if (Object.keys(activeFilters).length === 0) return sql
+    const table = options.tableName ?? registry?.list()[0]?.name
+    if (!table) return sql
+    return FilterInjector.inject(sql, activeFilters, table)
+  }, [sql, filters, options.tableName, options.noFilter, registry])
+
+  // Count query
+  const countSql = useMemo(
+    () => `SELECT COUNT(*) AS _total FROM (${baseSql}) AS _count_base`,
+    [baseSql]
+  )
+
+  // Page query with ORDER BY + LIMIT/OFFSET
+  const pageSql = useMemo(() => {
+    const orderClause = options.orderBy
+      ? ` ORDER BY "${options.orderBy.column}" ${options.orderBy.direction.toUpperCase()}`
+      : ''
+    const offset = options.page * options.pageSize
+    return `SELECT * FROM (${baseSql}) AS _page_base${orderClause} LIMIT ${options.pageSize} OFFSET ${offset}`
+  }, [baseSql, options.orderBy, options.page, options.pageSize])
+
+  const [rows, setRows] = useState<Record<string, unknown>[]>([])
+  const [columns, setColumns] = useState<QueryResult['columns']>([])
+  const [totalRows, setTotalRows] = useState(0)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<Error | null>(null)
+
+  const execute = useCallback(async () => {
+    if (!executor || status !== 'ready') return
+
+    setLoading(true)
+    setError(null)
+
+    try {
+      // Run count and page queries in parallel
+      const [countResult, pageResult] = await Promise.all([
+        cache?.get<QueryResult>(countSql)
+          ? Promise.resolve(cache.get<QueryResult>(countSql)!)
+          : executor.execute(countSql),
+        executor.execute(pageSql),
+      ])
+
+      // Cache the count result
+      if (cache && !cache.get(countSql)) {
+        cache.set(countSql, countResult)
+      }
+
+      const total = Number(countResult.rows[0]?._total ?? 0)
+      setTotalRows(total)
+      setRows(pageResult.rows)
+      setColumns(pageResult.columns)
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error(String(err)))
+    } finally {
+      setLoading(false)
+    }
+  }, [executor, countSql, pageSql, status, filterVersion, cache])
+
+  useEffect(() => {
+    execute()
+  }, [execute])
+
+  return { rows, columns, totalRows, loading, error, refetch: execute }
+}
+
 export function useSchema(tableName?: string) {
   const { inspector, status } = useDuck()
   const [tables, setTables] = useState<string[]>([])
