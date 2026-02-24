@@ -1,3 +1,5 @@
+import { requireLicense } from '../license/requireLicense'
+
 export interface ConditionalFormatRule {
   column: string
   condition: 'gt' | 'lt' | 'eq' | 'between'
@@ -10,7 +12,9 @@ export interface ConditionalFormatProps {
   children: React.ReactNode
 }
 
-export function ConditionalFormat({ children }: ConditionalFormatProps) {
+function ConditionalFormatInner({ children }: ConditionalFormatProps) {
   // TODO: Apply conditional formatting to table cells
   return <>{children}</>
 }
+
+export const ConditionalFormat = requireLicense(ConditionalFormatInner, 'ConditionalFormat')

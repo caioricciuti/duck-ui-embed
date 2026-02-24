@@ -1,3 +1,5 @@
+import { PUBLIC_KEY } from './keys'
+
 export interface LicensePayload {
   sub: string
   dom: string[]
@@ -5,18 +7,63 @@ export interface LicensePayload {
   tier: 'pro' | 'enterprise'
 }
 
+function base64urlToUint8Array(b64: string): Uint8Array {
+  // base64url → base64
+  const base64 = b64.replace(/-/g, '+').replace(/_/g, '/')
+  const pad = base64.length % 4
+  const padded = pad ? base64 + '='.repeat(4 - pad) : base64
+  const binary = atob(padded)
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) {
+    bytes[i] = binary.charCodeAt(i)
+  }
+  return bytes
+}
+
 export class LicenseValidator {
   private payload: LicensePayload | null = null
 
   async validate(key: string): Promise<boolean> {
     try {
-      const [payloadB64, _signatureB64] = key.replace('DUCK-', '').split('.')
-      const payload = JSON.parse(atob(payloadB64)) as LicensePayload
+      const stripped = key.replace('DUCK-', '')
+      const dotIndex = stripped.indexOf('.')
+      if (dotIndex === -1) return false
+
+      const payloadB64 = stripped.slice(0, dotIndex)
+      const signatureB64 = stripped.slice(dotIndex + 1)
+
+      // Verify Ed25519 signature
+      const publicKeyBytes = base64urlToUint8Array(PUBLIC_KEY)
+      const cryptoKey = await crypto.subtle.importKey(
+        'spki',
+        publicKeyBytes.buffer as ArrayBuffer,
+        { name: 'Ed25519' },
+        false,
+        ['verify'],
+      )
+
+      const payloadBytes = new TextEncoder().encode(payloadB64)
+      const signatureBytes = base64urlToUint8Array(signatureB64)
+
+      const valid = await crypto.subtle.verify(
+        'Ed25519',
+        cryptoKey,
+        signatureBytes.buffer as ArrayBuffer,
+        payloadBytes,
+      )
+      if (!valid) return false
+
+      // Decode payload
+      const payloadJson = atob(
+        payloadB64.replace(/-/g, '+').replace(/_/g, '/') +
+          '='.repeat((4 - (payloadB64.length % 4)) % 4),
+      )
+      const payload = JSON.parse(payloadJson) as LicensePayload
 
       // Check expiry
       if (Date.now() / 1000 > payload.exp) return false
 
-      // Check domain
+      // Check domain (browser only)
       if (typeof window !== 'undefined') {
         const hostname = window.location.hostname
         const domainMatch = payload.dom.some((pattern) => {

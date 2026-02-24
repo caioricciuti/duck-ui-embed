@@ -36,3 +36,8 @@ bun-debug.log*
 # Bun
 bun.lockb
 .claude
+
+# License keys (private.pem is the signing secret — never commit)
+# The *.pem rule above already covers these, but explicit for clarity
+/scripts
+PUBLISH.md

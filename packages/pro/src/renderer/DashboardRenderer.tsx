@@ -1,11 +1,12 @@
 import type { DashboardConfig } from '../builder/types'
+import { requireLicense } from '../license/requireLicense'
 
 export interface DashboardRendererProps {
   config: DashboardConfig
   className?: string
 }
 
-export function DashboardRenderer({ config, className }: DashboardRendererProps) {
+function DashboardRendererInner({ config, className }: DashboardRendererProps) {
   // TODO: Render dashboard from config
   return (
     <div className={className}>
@@ -20,3 +21,5 @@ export function DashboardRenderer({ config, className }: DashboardRendererProps)
     </div>
   )
 }
+
+export const DashboardRenderer = requireLicense(DashboardRendererInner, 'DashboardRenderer')

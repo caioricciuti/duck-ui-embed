@@ -1,6 +1,6 @@
 {
   "name": "@duck_ui/core",
-  "version": "0.1.0",
+  "version": "0.1.4",
   "description": "DuckDB-WASM engine, query executor, and data source management",
   "author": "Duck-UI",
   "repository": {
@@ -33,8 +33,8 @@
     "clean": "rm -rf dist"
   },
   "peerDependencies": {
-    "@duckdb/duckdb-wasm": ">=1.28.0"
+    "@duckdb/duckdb-wasm": ">=1.33.1-dev19.0"
   },
-  "files": ["dist"],
+  "files": ["dist", "README.md", "LICENSE"],
   "license": "Apache-2.0"
 }
