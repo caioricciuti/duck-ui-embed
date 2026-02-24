@@ -1,6 +1,6 @@
 {
   "name": "@duck_ui/core",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "DuckDB-WASM engine, query executor, and data source management",
   "author": "Duck-UI",
   "repository": {

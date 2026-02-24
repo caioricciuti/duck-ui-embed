@@ -1,6 +1,6 @@
 {
   "name": "@duck_ui/charts",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "uPlot-based chart components for React (line, bar, area, pie, sparkline)",
   "author": "Duck-UI",
   "repository": {
