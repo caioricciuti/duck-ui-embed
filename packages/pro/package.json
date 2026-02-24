@@ -1,6 +1,6 @@
 {
   "name": "@duck_ui/pro",
-  "version": "0.1.6",
+  "version": "0.1.8",
   "description": "Pro features for Duck-UI (license-gated)",
   "author": "Duck-UI",
   "repository": {
@@ -33,14 +33,14 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@duck_ui/core": "^0.1.6",
-    "@duck_ui/charts": "^0.1.6",
-    "@duck_ui/components": "^0.1.6"
+    "@duck_ui/core": "^0.1.8",
+    "@duck_ui/charts": "^0.1.8",
+    "@duck_ui/components": "^0.1.8"
   },
   "peerDependencies": {
     "react": ">=18",
     "react-dom": ">=18",
-    "@duckdb/duckdb-wasm": "1.33.1-dev19.0"
+    "@duckdb/duckdb-wasm": ">=1.28.0"
   },
   "files": ["dist", "README.md", "LICENSE.md"],
   "license": "SEE LICENSE IN LICENSE.md"

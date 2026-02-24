@@ -1,6 +1,6 @@
 {
   "name": "@duck_ui/embed",
-  "version": "0.1.6",
+  "version": "0.1.8",
   "description": "All-in-one embeddable analytics powered by DuckDB-WASM",
   "author": "Duck-UI",
   "repository": {
@@ -32,9 +32,9 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@duck_ui/core": "^0.1.6",
-    "@duck_ui/charts": "^0.1.6",
-    "@duck_ui/components": "^0.1.6"
+    "@duck_ui/core": "^0.1.8",
+    "@duck_ui/charts": "^0.1.8",
+    "@duck_ui/components": "^0.1.8"
   },
   "peerDependencies": {
     "react": ">=18",

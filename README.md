@@ -2,6 +2,17 @@
 
 Embed SQL-powered analytics dashboards in any React app using DuckDB-WASM. Zero backend required.
 
+## Documentation
+
+Full documentation: **[docs/](./docs/README.md)**
+
+- [Getting Started](./docs/getting-started.md) -- install and first dashboard
+- [Data Sources](./docs/guides/data-sources.md) -- files, URLs, gateway sources
+- [Gateway Pattern](./docs/guides/gateway-pattern.md) -- connect Postgres, MySQL, ClickHouse, BigQuery
+- [Filters](./docs/guides/filters.md) -- reactive filter system
+- [Charts](./docs/guides/charts.md) -- all chart types and customization
+- [API Reference](./docs/api/core.md) -- full API for every package
+
 ## Quick Start
 
 ```bash
@@ -55,8 +66,12 @@ function Dashboard() {
 // Remote URL (auto-detects format from extension)
 { type: 'url', name: 'data', url: 'https://example.com/data.parquet' }
 
-// S3/GCS/Azure — requires @duck_ui/pro
-// Postgres/MySQL — requires @duck_ui/pro
+// API gateway (your backend queries the database, returns data)
+{ type: 'gateway', name: 'data', endpoint: '/api/query', query: 'SELECT * FROM users' }
+
+// Database aliases (same gateway mechanism, signals intent)
+{ type: 'postgres', name: 'users', endpoint: '/api/pg', query: 'users' }
+{ type: 'mysql', name: 'orders', endpoint: '/api/mysql', query: 'orders' }
 ```
 
 ## Components
@@ -117,7 +132,7 @@ Global filters that reactively update all components.
 
 ## Pro
 
-`@duck_ui/pro` adds license-gated features on top of the free packages. **$499/year per project** — get a license at [duck-ui.com/pro](https://duck-ui.com/pro).
+`@duck_ui/pro` adds license-gated features on top of the free packages. Contact **c.ricciuti@iberodata.es** for pricing and license keys.
 
 ```bash
 bun add @duck_ui/pro
@@ -306,4 +321,4 @@ duck-ui-embed/
 
 Apache-2.0 for `@duck_ui/core`, `@duck_ui/charts`, `@duck_ui/components`, `@duck_ui/embed`.
 
-Commercial license for `@duck_ui/pro` — **$499/year per project**. [Get a license](https://duck-ui.com/pro).
+Commercial license for `@duck_ui/pro` — contact **c.ricciuti@iberodata.es** for pricing.

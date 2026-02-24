@@ -43,10 +43,19 @@ const tables = await inspector.getTables()
 - `QueryExecutor` — execute SQL and get typed results
 - `QueryCache` — LRU cache for query results
 - `SchemaInspector` — list tables, get column schemas
-- `SourceLoader` — load files, URLs, and other data sources
+- `SourceLoader` — load files, URLs, and gateway sources
+- `FileSource`, `URLSource`, `GatewaySource` — individual source loaders
 - `DataSourceRegistry` — register and manage data sources
 - `FilterInjector` — inject WHERE clauses into SQL
-- Types: `QueryResult`, `ColumnInfo`, `TableSchema`, `SourceConfig`, `FilterValue`
+- `SchemaInference` — detect file formats and suggest table names
+- Types: `QueryResult`, `ColumnInfo`, `TableSchema`, `SourceConfig`, `FilterValue`, `CsvOptions`
+- Errors: `DuckUIError`, `SourceLoadError`, `QuerySyntaxError`, `EngineNotInitializedError`
+
+## Full Documentation
+
+- [API Reference](../../docs/api/core.md)
+- [Data Sources Guide](../../docs/guides/data-sources.md)
+- [Gateway Pattern Guide](../../docs/guides/gateway-pattern.md)
 
 ## License
 

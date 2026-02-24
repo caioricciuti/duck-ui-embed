@@ -70,6 +70,12 @@ import { UChart, PieChart, Sparkline } from '@duck_ui/charts'
 - `defaultPalette`, `darkPalette`, `colorblindPalette`
 - `useResizeObserver` — responsive container hook
 
+## Full Documentation
+
+- [API Reference](../../docs/api/charts.md)
+- [Charts Guide](../../docs/guides/charts.md)
+- [Theming Guide](../../docs/guides/theming.md)
+
 ## License
 
 Apache-2.0

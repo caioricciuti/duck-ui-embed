@@ -58,11 +58,18 @@ function Dashboard() {
 
 - `useDuck()` — access engine status, filters, setFilter
 - `useQuery(sql)` — execute SQL with loading/error states
+- `usePaginatedQuery(sql)` — SQL-level pagination with LIMIT/OFFSET
 - `useSchema(table?)` — inspect table schemas
 
 ## Shared
 
 - `Loading`, `ErrorDisplay`, `EmptyState`
+
+## Full Documentation
+
+- [API Reference](../../docs/api/components.md)
+- [Filters Guide](../../docs/guides/filters.md)
+- [Performance Guide](../../docs/guides/performance.md)
 
 ## License
 

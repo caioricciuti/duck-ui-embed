@@ -46,6 +46,11 @@ function Dashboard() {
 | `@duck_ui/charts` | uPlot chart components |
 | `@duck_ui/components` | DuckProvider, DataTable, Chart, KPICard, filters, hooks |
 
+## Full Documentation
+
+- [API Reference](../../docs/api/embed.md)
+- [Getting Started](../../docs/getting-started.md)
+
 ## License
 
 Apache-2.0

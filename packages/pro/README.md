@@ -2,7 +2,7 @@
 
 > Pro features for Duck-UI — dashboard builder, pivot tables, drill-down, row-level security, and more.
 
-**$499/year per project.** Get a license at [duck-ui.com/pro](https://duck-ui.com/pro).
+Contact **c.ricciuti@iberodata.es** for pricing and license keys.
 
 ## Install
 
@@ -345,6 +345,11 @@ function SalesDashboard() {
   )
 }
 ```
+
+## Full Documentation
+
+- [API Reference](../../docs/api/pro.md)
+- [Pro License Guide](../../docs/guides/pro-license.md)
 
 ## License
 
