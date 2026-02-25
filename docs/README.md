@@ -24,15 +24,6 @@ Drop-in SQL-powered React components backed by DuckDB-WASM. One package. One pro
 |---------|-------------|
 | [@duck_ui/embed](./api/embed.md) | DuckUIProvider, hooks, components, charts, engine |
 
-## Examples
-
-| Example | Description |
-|---------|-------------|
-| [Sales Dashboard](./examples/sales-dashboard.md) | Complete dashboard with KPIs, charts, table, and filters |
-| [Express.js Gateway](./examples/gateway-express.md) | Postgres gateway with Express.js backend |
-| [Next.js Gateway](./examples/gateway-nextjs.md) | Postgres gateway with Next.js API routes |
-| [Multi-Source Dashboard](./examples/multi-source.md) | Multiple data sources with cross-table queries |
-
 ## License
 
 Apache-2.0
