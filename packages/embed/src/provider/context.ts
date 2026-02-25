@@ -3,7 +3,6 @@ import type { QueryExecutor, QueryResult } from '../engine/query'
 import type { SchemaInspector } from '../engine/schema'
 import type { QueryCache } from '../engine/cache'
 import type { FilterValue } from '../engine/filter-inject'
-import type { LicensePayload } from '../license/validator'
 import type { DuckTheme } from '../charts/theme'
 
 export interface DuckUIContextValue {
@@ -29,8 +28,6 @@ export interface DuckUIContextValue {
   filterVersion: number
   /** Table names loaded from the data prop */
   tableNames: string[]
-  /** License info (null = free tier) */
-  license: LicensePayload | null
   /** Merged theme (defaults + user overrides) */
   theme: DuckTheme
 }

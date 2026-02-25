@@ -6,19 +6,15 @@ Get a SQL-powered analytics dashboard running in your React app in 5 minutes.
 
 - Node.js 18+
 - React 18+
-- A package manager (bun, npm, yarn, or pnpm)
+- A package manager (bun recommended)
 
 ## Installation
 
 ```bash
-# Recommended: single package that includes everything
 bun add @duck_ui/embed @duckdb/duckdb-wasm
-
-# Or install individual packages
-bun add @duck_ui/core @duck_ui/charts @duck_ui/components @duckdb/duckdb-wasm
 ```
 
-npm / yarn / pnpm work the same way:
+Or with npm:
 
 ```bash
 npm install @duck_ui/embed @duckdb/duckdb-wasm
@@ -26,49 +22,42 @@ npm install @duck_ui/embed @duckdb/duckdb-wasm
 
 ## Minimal Example
 
-Wrap your app with `DuckProvider`, point it at a data source, and drop in components:
+Wrap your app with `DuckUIProvider`, pass data, and drop in components:
 
 ```tsx
-import { DuckProvider, DataTable } from '@duck_ui/embed'
+import { DuckUIProvider, DataTable } from '@duck_ui/embed'
+
+const orders = [
+  { id: 1, product: 'Widget', status: 'shipped', total: 99.50 },
+  { id: 2, product: 'Gadget', status: 'pending', total: 149.00 },
+]
 
 function App() {
   return (
-    <DuckProvider
-      config={{
-        sources: [
-          { type: 'url', name: 'sales', url: '/data/sales.parquet' },
-        ],
-      }}
-    >
-      <DataTable sql="SELECT * FROM sales" />
-    </DuckProvider>
+    <DuckUIProvider data={{ orders }}>
+      <DataTable sql="SELECT * FROM orders" />
+    </DuckUIProvider>
   )
 }
 ```
 
-That's it. DuckDB-WASM boots in a Web Worker, fetches the Parquet file, creates a `sales` table, and the `DataTable` renders it with pagination and sorting.
+That's it. DuckDB-WASM boots in a Web Worker, loads the array into a `orders` table, and the `DataTable` renders it with pagination and sorting.
 
 ## Add a Chart
 
 ```tsx
-import { DuckProvider, DataTable, Chart } from '@duck_ui/embed'
+import { DuckUIProvider, DataTable, Chart } from '@duck_ui/embed'
 
 function App() {
   return (
-    <DuckProvider
-      config={{
-        sources: [
-          { type: 'url', name: 'sales', url: '/data/sales.parquet' },
-        ],
-      }}
-    >
+    <DuckUIProvider data={{ orders }}>
       <Chart
-        sql="SELECT month, SUM(revenue) AS rev FROM sales GROUP BY 1 ORDER BY 1"
+        sql="SELECT product, SUM(total) AS revenue FROM orders GROUP BY 1"
         type="bar"
         height={300}
       />
-      <DataTable sql="SELECT * FROM sales" pageSize={25} />
-    </DuckProvider>
+      <DataTable sql="SELECT * FROM orders" pageSize={25} />
+    </DuckUIProvider>
   )
 }
 ```
@@ -81,69 +70,58 @@ The first column of the query result becomes the x-axis, remaining columns becom
 import { KPICard } from '@duck_ui/embed'
 
 <KPICard
-  sql="SELECT SUM(revenue) AS value FROM sales"
+  sql="SELECT SUM(total) AS value FROM orders"
   label="Total Revenue"
   format="currency"
-  comparisonSql="SELECT SUM(revenue) AS value FROM sales WHERE year = 2023"
-  sparklineSql="SELECT month, SUM(revenue) AS rev FROM sales GROUP BY 1 ORDER BY 1"
+  compareSql="SELECT SUM(total) AS value FROM orders WHERE year = 2024"
+  sparklineSql="SELECT month, SUM(total) AS rev FROM orders GROUP BY 1 ORDER BY 1"
 />
 ```
 
 - `format` accepts `'currency'`, `'percent'`, `'number'`, `'compact'`, or a custom function
-- `comparisonSql` shows a percentage change vs. the comparison value
+- `compareSql` shows a percentage change vs. the comparison value
 - `sparklineSql` renders an inline trend line
 
 ## Add Filters
 
-Filters are global -- they automatically inject WHERE clauses into all queries:
+Filters are global — they automatically inject WHERE clauses into all queries:
 
 ```tsx
 import {
-  DuckProvider, DataTable, Chart, KPICard,
-  FilterBar, SelectFilter, DateRangeFilter, RangeFilter,
+  DuckUIProvider, DataTable, Chart, KPICard, FilterBar,
 } from '@duck_ui/embed'
 
 function Dashboard() {
   return (
-    <DuckProvider
-      config={{
-        sources: [{ type: 'url', name: 'sales', url: '/data/sales.parquet' }],
-      }}
-    >
-      <FilterBar>
-        <SelectFilter column="region" source="sales" label="Region" />
-        <DateRangeFilter column="date" label="Date" />
-        <RangeFilter column="amount" min={0} max={10000} label="Amount" />
-      </FilterBar>
-
-      <KPICard sql="SELECT SUM(revenue) AS value FROM sales" label="Revenue" format="currency" />
-      <Chart sql="SELECT month, SUM(revenue) AS rev FROM sales GROUP BY 1" type="bar" height={300} />
-      <DataTable sql="SELECT * FROM sales" pageSize={25} />
-    </DuckProvider>
+    <DuckUIProvider data={{ orders }}>
+      <FilterBar auto="orders" />
+      <KPICard sql="SELECT SUM(total) AS value FROM orders" label="Revenue" format="currency" />
+      <Chart sql="SELECT product, SUM(total) AS rev FROM orders GROUP BY 1" type="bar" height={300} />
+      <DataTable sql="SELECT * FROM orders" pageSize={25} />
+    </DuckUIProvider>
   )
 }
 ```
 
-When a user selects "North" in the Region filter, every component automatically re-queries with `WHERE region = 'North'` injected.
+When a user selects a filter value, every component automatically re-queries with the filter applied.
 
-## Data Source Types
+## Data Sources
 
 ```tsx
-// Local file (ArrayBuffer, Uint8Array, or File object)
-{ type: 'file', name: 'data', data: fileBuffer, format: 'csv' }
+// Array of objects (loaded directly into DuckDB)
+<DuckUIProvider data={{ orders: [...] }}>
 
-// Remote URL (format auto-detected from extension or Content-Type)
-{ type: 'url', name: 'data', url: 'https://example.com/data.parquet' }
+// Remote file (CSV, JSON, or Parquet)
+<DuckUIProvider data={{ sales: { url: '/data/sales.parquet', format: 'parquet' } }}>
 
-// API gateway (your backend queries the database, returns data)
-{ type: 'gateway', name: 'data', endpoint: '/api/query', query: 'SELECT * FROM users' }
+// Async fetch callback (call your own API)
+<DuckUIProvider data={{ users: { fetch: () => fetch('/api/users').then(r => r.json()) } }}>
 
-// Database aliases (same as gateway, signals intent)
-{ type: 'postgres', name: 'users', endpoint: '/api/pg', query: 'SELECT * FROM users' }
-{ type: 'mysql', name: 'orders', endpoint: '/api/mysql', query: 'SELECT * FROM orders' }
+// Browser File object (drag & drop, file picker)
+<DuckUIProvider data={{ upload: fileFromInput }}>
 ```
 
-See the [Data Sources](./guides/data-sources.md) and [Gateway Pattern](./guides/gateway-pattern.md) guides for details.
+See the [Data Sources](./guides/data-sources.md) guide for details.
 
 ## Bundler Configuration
 
@@ -171,7 +149,7 @@ Ensure your Duck-UI components are client-only:
 
 ```tsx
 'use client'
-import { DuckProvider, DataTable } from '@duck_ui/embed'
+import { DuckUIProvider, DataTable } from '@duck_ui/embed'
 ```
 
 ### Webpack
@@ -191,8 +169,8 @@ module.exports = {
 
 ## Next Steps
 
-- [Data Sources](./guides/data-sources.md) -- all source types, format detection, maxRows
-- [Gateway Pattern](./guides/gateway-pattern.md) -- connect to Postgres, MySQL, ClickHouse, BigQuery
-- [Filters](./guides/filters.md) -- deep dive into the filter system
-- [Charts](./guides/charts.md) -- all chart types and customization
-- [API Reference](./api/core.md) -- full API for every package
+- [Data Sources](./guides/data-sources.md) — all data input types
+- [Gateway Pattern](./guides/gateway-pattern.md) — connect to Postgres, MySQL, ClickHouse via your backend
+- [Filters](./guides/filters.md) — deep dive into the filter system
+- [Charts](./guides/charts.md) — all chart types and customization
+- [API Reference](./api/embed.md) — full API reference

@@ -49,7 +49,6 @@ The single provider that initializes DuckDB-WASM, loads data, and provides conte
 ```tsx
 <DuckUIProvider
   data={{ orders, products }}   // Record<string, DataInput> — key = table name
-  license="DUCK-xxx.yyy"       // optional — unlocks pro features
   theme={{ palette: [...] }}    // optional — Partial<DuckTheme>
   onReady={() => {}}            // optional — fires when DuckDB + data are loaded
   onError={(err) => {}}         // optional — fires on init/load errors
@@ -75,7 +74,7 @@ type DataInput =
 ### Hooks
 
 ```tsx
-import { useDuckUI, useTheme, useLicense } from '@duck_ui/embed'
+import { useDuckUI, useTheme } from '@duck_ui/embed'
 
 // Public query hook
 const { query, status } = useDuckUI()
@@ -85,9 +84,6 @@ const result = await query("SELECT count(*) as n FROM orders")
 
 // Theme hook
 const theme = useTheme()
-
-// License hook
-const { isPro, tier, payload } = useLicense()
 ```
 
 ### Components
@@ -142,7 +138,7 @@ Declarative filters — auto-detect from schema or configure manually.
 
 #### ExportButton
 
-CSV/JSON export (requires Pro license).
+CSV/JSON export.
 
 ```tsx
 <ExportButton data={queryResult} format="csv" fileName="orders" />
@@ -172,17 +168,6 @@ A built-in `darkTheme` is available:
 import { darkTheme } from '@duck_ui/embed'
 <DuckUIProvider data={{ orders }} theme={darkTheme}>
 ```
-
-### Pro Features
-
-Without a `license` prop, the free tier is active:
-- "Powered by Duck-UI" badge shown
-- Export is disabled
-
-With a valid license:
-- Badge removed
-- Export enabled
-- Future: groupBy, pivot, drillDown, row-level security
 
 ## Browser Compatibility
 

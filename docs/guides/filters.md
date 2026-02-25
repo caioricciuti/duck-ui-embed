@@ -1,6 +1,6 @@
 # Filters
 
-Duck-UI's filter system is reactive and global. When a user changes a filter, every component inside the same `DuckProvider` automatically re-queries with the new filter applied.
+Duck-UI's filter system is reactive and global. When a user changes a filter, every component inside the same `DuckUIProvider` automatically re-queries with the new filter applied.
 
 ## How It Works
 
@@ -187,7 +187,7 @@ type FilterValue =
 The `FilterInjector` class handles SQL rewriting. It wraps the original SQL as a subquery and appends WHERE clauses:
 
 ```ts
-import { FilterInjector } from '@duck_ui/core'
+import { FilterInjector } from '@duck_ui/embed'
 
 const sql = 'SELECT * FROM sales'
 const filters = { region: 'North', amount: { min: 100, max: 5000 } }
@@ -205,7 +205,7 @@ You can set filters programmatically without using filter components:
 
 ```tsx
 function MyComponent() {
-  const { setFilter, clearFilters, filters } = useDuck()
+  const { setFilter, clearFilters, filters } = useDuckUI()
 
   // Set a filter
   setFilter('region', 'North')

@@ -2,12 +2,12 @@
 
 Customize the visual appearance of Duck-UI charts and components.
 
-## Chart Themes (Free)
+## Chart Themes
 
 Pass a `theme` prop to `UChart` to control chart appearance:
 
 ```tsx
-import { UChart, lightTheme, darkTheme } from '@duck_ui/charts'
+import { UChart, lightTheme, darkTheme } from '@duck_ui/embed'
 
 // Light theme (default)
 <UChart data={data} type="line" theme={lightTheme} height={300} />
@@ -63,7 +63,7 @@ const corporateTheme: ChartTheme = {
 Three built-in 8-color palettes:
 
 ```tsx
-import { defaultPalette, darkPalette, colorblindPalette } from '@duck_ui/charts'
+import { defaultPalette, darkPalette, colorblindPalette } from '@duck_ui/embed'
 ```
 
 - **defaultPalette** — Vibrant Tailwind-inspired colors for light backgrounds
@@ -77,65 +77,6 @@ Override per chart with the `colors` prop:
 ```
 
 Colors cycle when there are more series than palette entries.
-
-## Pro ThemeProvider
-
-`@duck_ui/pro` includes a `ThemeProvider` component that injects CSS custom properties for broader styling control:
-
-```tsx
-import { ProProvider, ThemeProvider } from '@duck_ui/pro'
-
-<ProProvider license="DUCK-...">
-  <ThemeProvider theme={{
-    primary: '#4f46e5',
-    fontFamily: 'Inter, sans-serif',
-    borderRadius: '8px',
-    background: '#fafafa',
-  }}>
-    {/* All children can use --duck-primary, --duck-fontFamily, etc. */}
-    <DataTable sql="SELECT * FROM sales" />
-    <Chart sql="SELECT month, revenue FROM sales GROUP BY 1" type="bar" height={300} />
-  </ThemeProvider>
-</ProProvider>
-```
-
-### How It Works
-
-Each key in the `theme` object becomes a CSS custom property with the `--duck-` prefix:
-
-| Theme Key | CSS Property |
-|-----------|-------------|
-| `primary` | `--duck-primary` |
-| `fontFamily` | `--duck-fontFamily` |
-| `borderRadius` | `--duck-borderRadius` |
-
-You can reference these in your own CSS:
-
-```css
-.my-dashboard {
-  font-family: var(--duck-fontFamily, system-ui);
-  border-radius: var(--duck-borderRadius, 4px);
-}
-
-.my-dashboard .highlight {
-  color: var(--duck-primary, #2563eb);
-}
-```
-
-### DashboardConfig Theme
-
-When using `DashboardBuilder` / `DashboardRenderer`, the config includes a `ThemeConfig`:
-
-```ts
-interface ThemeConfig {
-  primaryColor?: string
-  fontFamily?: string
-  borderRadius?: number
-  darkMode?: boolean
-}
-```
-
-This is applied automatically when rendering a dashboard.
 
 ## Component Styling
 

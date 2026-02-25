@@ -1,60 +1,49 @@
 # Example: Multi-Source Dashboard
 
-A dashboard that loads data from multiple sources — Parquet files, CSV URLs, and a PostgreSQL gateway — and queries across them.
+A dashboard that loads data from multiple sources — Parquet files, CSV URLs, and an API — and queries across them.
 
 ## Config
 
 ```tsx
-import { DuckProvider, DataTable, Chart, KPICard, FilterBar, SelectFilter } from '@duck_ui/embed'
+import { DuckUIProvider, DataTable, Chart, KPICard, FilterBar } from '@duck_ui/embed'
 
 function MultiSourceDashboard() {
   return (
-    <DuckProvider
-      config={{
-        sources: [
-          // Source 1: Parquet file from CDN
-          {
-            type: 'url',
-            name: 'products',
-            url: 'https://cdn.example.com/data/products.parquet',
-          },
+    <DuckUIProvider data={{
+      // Source 1: Parquet file from CDN
+      products: { url: 'https://cdn.example.com/data/products.parquet', format: 'parquet' },
 
-          // Source 2: CSV file from local server
-          {
-            type: 'url',
-            name: 'categories',
-            url: '/data/categories.csv',
-            format: 'csv',
-            csvOptions: { delimiter: ',', header: true },
-          },
+      // Source 2: CSV file from local server
+      categories: { url: '/data/categories.csv' },
 
-          // Source 3: PostgreSQL via gateway
-          {
-            type: 'postgres',
-            name: 'orders',
-            endpoint: '/api/pg',
-            query: 'orders',
-            headers: { Authorization: `Bearer ${token}` },
+      // Source 3: PostgreSQL via gateway
+      orders: {
+        fetch: () => fetch('/api/pg', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
           },
+          body: JSON.stringify({ query: 'orders' }),
+        }).then(r => r.json()),
+      },
 
-          // Source 4: ClickHouse via gateway
-          {
-            type: 'clickhouse',
-            name: 'events',
-            endpoint: '/api/clickhouse',
-            query: 'page_views',
-            maxRows: 100000,
-          },
-        ],
-      }}
-    >
+      // Source 4: ClickHouse via gateway
+      events: {
+        fetch: () => fetch('/api/clickhouse', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: 'page_views' }),
+        }).then(r => r.json()),
+      },
+    }}>
       <Dashboard />
-    </DuckProvider>
+    </DuckUIProvider>
   )
 }
 ```
 
-Each source becomes a DuckDB table. You can query them independently or join them.
+Each entry in the `data` prop creates a DuckDB table. You can query them independently or join them.
 
 ## Cross-Table Queries
 
@@ -126,10 +115,7 @@ function Dashboard() {
 Filters work across all sources. If you filter by a column that exists in multiple tables, the filter applies to all queries that reference that column:
 
 ```tsx
-<FilterBar>
-  {/* This filter applies to any query with a "category" column */}
-  <SelectFilter column="category" options={['Electronics', 'Clothing', 'Food']} label="Category" />
-</FilterBar>
+<FilterBar auto="orders" />
 ```
 
 For table-specific filtering, use the `tableName` prop on components:
@@ -143,52 +129,19 @@ For table-specific filtering, use the `tableName` prop on components:
 />
 ```
 
-## Loading Order
+## Loading
 
-Sources load in the order they appear in the array. All sources must finish loading before `status` becomes `'ready'` and components render.
-
-If one source fails (e.g., network error), the entire `DuckProvider` enters the `'error'` state. Handle this in your UI:
+All data sources must finish loading before `status` becomes `'ready'` and components render. If one source fails, the entire provider enters the `'error'` state.
 
 ```tsx
-import { useDuck } from '@duck_ui/embed'
+import { useDuckUI } from '@duck_ui/embed'
 
 function Dashboard() {
-  const { status, error } = useDuck()
+  const { status } = useDuckUI()
 
   if (status === 'loading') return <p>Loading data sources...</p>
-  if (status === 'error') return <p>Failed to load: {error?.message}</p>
+  if (status === 'error') return <p>Failed to load data</p>
 
-  return (
-    <>
-      {/* Dashboard content */}
-    </>
-  )
+  return <>{/* Dashboard content */}</>
 }
-```
-
-## Table Name Override
-
-If two sources would have the same name, use `tableName` to differentiate:
-
-```tsx
-{
-  type: 'url',
-  name: 'q1-sales',           // Source identifier
-  url: '/data/q1-sales.csv',
-  tableName: 'sales_q1',      // DuckDB table name
-},
-{
-  type: 'url',
-  name: 'q2-sales',
-  url: '/data/q2-sales.csv',
-  tableName: 'sales_q2',
-},
-```
-
-Then query:
-
-```sql
-SELECT * FROM sales_q1
-UNION ALL
-SELECT * FROM sales_q2
 ```

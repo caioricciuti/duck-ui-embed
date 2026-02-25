@@ -37,7 +37,7 @@ SELECT EXTRACT(EPOCH FROM date) AS ts, SUM(revenue) FROM sales GROUP BY 1
 Direct access to the chart with full control over data format:
 
 ```tsx
-import { UChart } from '@duck_ui/charts'
+import { UChart } from '@duck_ui/embed'
 
 <UChart
   data={[
@@ -100,7 +100,7 @@ Points only, no connecting lines. Supports xy-drag selection.
 Canvas-based pie and donut charts:
 
 ```tsx
-import { PieChart } from '@duck_ui/charts'
+import { PieChart } from '@duck_ui/embed'
 
 // Pie chart
 <PieChart
@@ -125,7 +125,7 @@ Set `donut` to a value between 0 and 1 to control the inner radius ratio. `0` = 
 Minimal inline trend chart — no axes, legend, or cursor:
 
 ```tsx
-import { Sparkline } from '@duck_ui/charts'
+import { Sparkline } from '@duck_ui/embed'
 
 <Sparkline data={[10, 20, 15, 25, 30, 28, 35]} width={140} height={28} color="#2563eb" />
 ```
@@ -173,7 +173,7 @@ axes={{
 Tooltips are enabled by default. Customize them:
 
 ```tsx
-import { UChart, tooltipPlugin } from '@duck_ui/charts'
+import { UChart, tooltipPlugin } from '@duck_ui/embed'
 
 <UChart
   data={data}
@@ -226,7 +226,7 @@ Works with line and area charts (x-axis drag) and scatter charts (xy-drag).
 Switch between light and dark themes:
 
 ```tsx
-import { UChart, darkTheme } from '@duck_ui/charts'
+import { UChart, darkTheme } from '@duck_ui/embed'
 
 <UChart data={data} type="line" theme={darkTheme} height={300} />
 ```
@@ -252,7 +252,7 @@ const myTheme = {
 Three built-in palettes (8 colors each):
 
 ```tsx
-import { defaultPalette, darkPalette, colorblindPalette } from '@duck_ui/charts'
+import { defaultPalette, darkPalette, colorblindPalette } from '@duck_ui/embed'
 ```
 
 | Palette | Best For |
@@ -285,7 +285,7 @@ You typically don't need to use presets directly — set `type="line"` etc. and 
 Standalone formatting functions:
 
 ```tsx
-import { formatNumber, formatCurrency, formatPercent, formatDate } from '@duck_ui/charts'
+import { formatNumber, formatCurrency, formatPercent, formatDate } from '@duck_ui/embed'
 
 formatNumber(1500)       // '1.5K'
 formatNumber(2300000)    // '2.3M'
@@ -297,7 +297,7 @@ formatDate(1704067200)   // 'Jan 1, 2024'
 Build axis tick formatters:
 
 ```tsx
-import { buildAxisFormatter } from '@duck_ui/charts'
+import { buildAxisFormatter } from '@duck_ui/embed'
 
 const fmt = buildAxisFormatter('currency')
 fmt(1234) // '$1,234.00'

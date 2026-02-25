@@ -36,20 +36,6 @@ export function useTheme(): DuckTheme {
 }
 
 // ---------------------------------------------------------------------------
-// useLicense — public hook
-// ---------------------------------------------------------------------------
-
-export function useLicense(): { isPro: boolean; tier: 'pro' | 'enterprise' | null; payload: DuckUIContextValue['license'] } {
-  const ctx = useContext(DuckUIContext)
-  if (!ctx) throw new Error('useLicense must be used within a DuckUIProvider')
-  return {
-    isPro: ctx.license !== null,
-    tier: ctx.license?.tier ?? null,
-    payload: ctx.license,
-  }
-}
-
-// ---------------------------------------------------------------------------
 // useQuery
 // ---------------------------------------------------------------------------
 

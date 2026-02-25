@@ -44,34 +44,19 @@ function MyTable() {
 }
 ```
 
-## maxRows on Sources
+## Limiting Rows
 
-Limit rows at the source level during table creation:
+For large datasets, limit rows at the SQL level in your components:
 
 ```tsx
-<DuckProvider
-  config={{
-    sources: [{
-      type: 'url',
-      name: 'sales',
-      url: '/data/large-dataset.csv',
-      maxRows: 100000,  // Only load first 100K rows
-    }],
-  }}
->
+<DataTable
+  sql="SELECT * FROM sales LIMIT 100000"
+  pageSize={25}
+  sortable
+/>
 ```
 
-This adds a `LIMIT` clause to the `CREATE TABLE` SQL:
-
-```sql
-CREATE OR REPLACE TABLE "sales" AS
-SELECT * FROM read_csv_auto('large-dataset.csv') LIMIT 100000
-```
-
-Use cases:
-- Preview mode during development
-- Capping extremely large datasets
-- Reducing initial load time
+Or pre-filter data before loading — for example, with a `{ fetch }` source that only returns a subset from your backend.
 
 ## File Format Choice
 
@@ -84,17 +69,15 @@ Use cases:
 
 **Recommendation:** Use Parquet for any dataset over 10K rows. It compresses well and DuckDB reads it natively.
 
-For gateway sources, consider having your backend return Parquet:
+For remote data, use Parquet URLs when possible:
 
 ```tsx
-{
-  type: 'postgres',
-  name: 'data',
-  endpoint: '/api/query/parquet',
-  query: 'orders',
-  format: 'parquet',
-}
+<DuckUIProvider data={{
+  sales: { url: '/data/sales.parquet', format: 'parquet' },
+}}>
 ```
+
+DuckDB-WASM reads Parquet via HTTP range requests — it only downloads the row groups needed by each query, rather than the entire file.
 
 ## Query Cache
 
@@ -117,7 +100,7 @@ const { data } = useQuery('SELECT * FROM sales', { noCache: true })
 Invalidate cache programmatically:
 
 ```tsx
-const { cache } = useDuck()
+const { cache } = useDuckUI()
 
 cache.invalidate()          // Clear all cached queries
 cache.invalidate('my-key')  // Clear specific entry
@@ -129,14 +112,12 @@ The `usePaginatedQuery` hook caches the COUNT(*) result so page navigation only 
 
 The connection pool reuses DuckDB connections instead of creating new ones per query:
 
-```tsx
-<DuckProvider config={{ maxConnections: 4 }}>
-```
+The connection pool is managed internally by `DuckUIProvider`. Default settings:
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| `maxConnections` | `4` | Maximum concurrent connections |
-| `acquireTimeoutMs` | `30000` | Timeout when all connections are busy |
+| Max connections | `4` | Maximum concurrent connections |
+| Acquire timeout | `30000ms` | Timeout when all connections are busy |
 
 How it works:
 1. Query needs a connection → pool checks for idle connections
@@ -149,17 +130,7 @@ For most dashboards, the default of 4 connections is sufficient. Increase if you
 
 ## Memory Limits
 
-Configure the DuckDB-WASM memory limit:
-
-```tsx
-<DuckProvider
-  config={{
-    memoryLimit: 512 * 1024 * 1024,  // 512 MB
-  }}
->
-```
-
-Default: 256 MB. The memory warning threshold (default 0.8) logs a warning when usage approaches the limit.
+DuckDB-WASM has a default memory limit of 256 MB.
 
 Tips:
 - Parquet files use less memory than CSV (columnar, compressed)

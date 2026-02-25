@@ -11,9 +11,7 @@
     "lint": "turbo lint",
     "clean": "turbo clean",
     "publish:all": "turbo build && bash scripts/publish.sh",
-    "publish:dry": "turbo build && bash scripts/publish.sh --dry-run",
-    "generate-keypair": "bun scripts/generate-keypair.ts",
-    "generate-license": "bun scripts/generate-license.ts"
+    "publish:dry": "turbo build && bash scripts/publish.sh --dry-run"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.9.1",

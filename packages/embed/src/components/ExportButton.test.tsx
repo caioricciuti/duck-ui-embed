@@ -18,7 +18,6 @@ function createMockContext(overrides: Partial<DuckUIContextValue> = {}): DuckUIC
     clearFilters: vi.fn(),
     filterVersion: 0,
     tableNames: ['orders'],
-    license: null,
     theme: lightTheme,
     ...overrides,
   }
@@ -55,49 +54,22 @@ describe('ExportButton', () => {
     expect(screen.getByText('Export')).toBeInTheDocument()
   })
 
-  it('shows PRO badge when no license', () => {
-    const ctx = createMockContext({ license: null })
-    renderWithContext(<ExportButton data={mockData} />, ctx)
-    expect(screen.getByText('PRO')).toBeInTheDocument()
-  })
-
-  it('hides PRO badge when license is present', () => {
-    const ctx = createMockContext({
-      license: { sub: 'test', dom: ['*'], exp: Date.now() / 1000 + 9999, tier: 'pro' },
-    })
-    renderWithContext(<ExportButton data={mockData} />, ctx)
-    expect(screen.queryByText('PRO')).not.toBeInTheDocument()
-  })
-
-  it('is disabled when no license', () => {
-    const ctx = createMockContext({ license: null })
-    renderWithContext(<ExportButton data={mockData} />, ctx)
-    const button = screen.getByRole('button')
-    expect(button).toBeDisabled()
-  })
-
   it('is disabled when no data', () => {
-    const ctx = createMockContext({
-      license: { sub: 'test', dom: ['*'], exp: Date.now() / 1000 + 9999, tier: 'pro' },
-    })
+    const ctx = createMockContext()
     renderWithContext(<ExportButton data={null} />, ctx)
     const button = screen.getByRole('button')
     expect(button).toBeDisabled()
   })
 
-  it('is enabled when licensed and has data', () => {
-    const ctx = createMockContext({
-      license: { sub: 'test', dom: ['*'], exp: Date.now() / 1000 + 9999, tier: 'pro' },
-    })
+  it('is enabled when has data', () => {
+    const ctx = createMockContext()
     renderWithContext(<ExportButton data={mockData} />, ctx)
     const button = screen.getByRole('button')
     expect(button).not.toBeDisabled()
   })
 
-  it('triggers download on click when licensed', () => {
-    const ctx = createMockContext({
-      license: { sub: 'test', dom: ['*'], exp: Date.now() / 1000 + 9999, tier: 'pro' },
-    })
+  it('triggers download on click', () => {
+    const ctx = createMockContext()
 
     const mockCreateObjectURL = vi.fn(() => 'blob:test')
     const mockRevokeObjectURL = vi.fn()

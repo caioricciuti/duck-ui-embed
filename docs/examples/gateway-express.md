@@ -83,46 +83,37 @@ DATABASE_URL=postgres://user:pass@localhost:5432/mydb node server.js
 ## Frontend
 
 ```tsx
-import { DuckProvider, DataTable, Chart, KPICard } from '@duck_ui/embed'
+import { DuckUIProvider, DataTable, Chart, KPICard } from '@duck_ui/embed'
+
+function gatewayFetch(queryKey: string) {
+  return {
+    fetch: () => fetch('http://localhost:3001/api/pg', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: queryKey }),
+    }).then(r => r.json()),
+  }
+}
 
 function App() {
   return (
-    <DuckProvider
-      config={{
-        sources: [
-          {
-            type: 'postgres',
-            name: 'orders',
-            endpoint: 'http://localhost:3001/api/pg',
-            query: 'orders',
-          },
-          {
-            type: 'postgres',
-            name: 'revenue',
-            endpoint: 'http://localhost:3001/api/pg',
-            query: 'revenue_by_month',
-          },
-          {
-            type: 'postgres',
-            name: 'top_customers',
-            endpoint: 'http://localhost:3001/api/pg',
-            query: 'top_customers',
-          },
-        ],
-      }}
-    >
+    <DuckUIProvider data={{
+      orders: gatewayFetch('orders'),
+      revenue: gatewayFetch('revenue_by_month'),
+      top_customers: gatewayFetch('top_customers'),
+    }}>
       <KPICard
         sql="SELECT SUM(total_spent) AS value FROM top_customers"
         label="Total Revenue"
         format="currency"
       />
       <Chart
-        sql="SELECT month, revenue FROM revenue GROUP BY 1 ORDER BY 1"
+        sql="SELECT month, revenue FROM revenue ORDER BY 1"
         type="bar"
         height={300}
       />
-      <DataTable sql="SELECT * FROM orders" pageSize={25} />
-    </DuckProvider>
+      <DataTable sql="SELECT * FROM orders" pageSize={25} sortable />
+    </DuckUIProvider>
   )
 }
 ```
@@ -132,14 +123,17 @@ function App() {
 Add a JWT/Bearer token to gateway requests:
 
 ```tsx
-{
-  type: 'postgres',
-  name: 'orders',
-  endpoint: 'http://localhost:3001/api/pg',
-  query: 'orders',
-  headers: {
-    Authorization: `Bearer ${accessToken}`,
-  },
+function gatewayFetch(queryKey: string, token: string) {
+  return {
+    fetch: () => fetch('http://localhost:3001/api/pg', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ query: queryKey }),
+    }).then(r => r.json()),
+  }
 }
 ```
 
@@ -161,16 +155,9 @@ app.post('/api/pg', authMiddleware, async (req, res) => {
 
 ## How It Works
 
-1. `DuckProvider` mounts and starts loading sources
-2. For each `postgres` source, `GatewaySource` sends a POST request:
-   ```
-   POST http://localhost:3001/api/pg
-   Content-Type: application/json
-
-   { "query": "orders" }
-   ```
-3. Backend looks up "orders" in the allowlist, runs the SQL against Postgres
+1. `DuckUIProvider` mounts and calls each `fetch` function
+2. Each fetch sends a POST to `http://localhost:3001/api/pg`
+3. Backend looks up the query key in the allowlist, runs SQL against Postgres
 4. Backend returns JSON array of rows
-5. `GatewaySource` detects `application/json` Content-Type, registers the data as a file buffer
-6. DuckDB-WASM creates a table: `CREATE OR REPLACE TABLE "orders" AS SELECT * FROM read_json_auto('orders.json')`
-7. Components can now query the `orders` table with SQL
+5. Duck-UI loads the rows into DuckDB-WASM tables
+6. Components query the local tables with SQL

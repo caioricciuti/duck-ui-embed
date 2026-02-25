@@ -1,25 +1,22 @@
 # Architecture
 
-## Package Dependency Graph
+## Package Structure
+
+`@duck_ui/embed` is a single package containing everything:
 
 ```
-@duck_ui/embed (re-exports everything)
-  ├── @duck_ui/core          Pure TypeScript, no React
-  ├── @duck_ui/charts        React + uPlot
-  └── @duck_ui/components    React (depends on core + charts)
-
-@duck_ui/pro (separate install, depends on core + charts + components)
+packages/embed/src/
+├── provider/       DuckUIProvider, context, hooks, filter state (Zustand)
+├── engine/         DuckDB init, connection pool, query executor, cache, filter injection, schema
+├── components/     Chart, DataTable, KPICard, FilterBar, ExportButton, filter components
+└── charts/         uPlot wrappers (UChart, PieChart, Sparkline), presets, plugins, theme
 ```
 
-- **core** has zero runtime dependencies (only `@duckdb/duckdb-wasm` as peer dep)
-- **charts** depends on `uplot`, peers on `react`
-- **components** depends on core, charts, `@tanstack/react-table`, `@tanstack/react-virtual`, `zustand`
-- **embed** re-exports core + charts + components (zero own code)
-- **pro** depends on core + charts + components, peers on `react` and `@duckdb/duckdb-wasm`
+Peer dependency: `@duckdb/duckdb-wasm` (>=1.28.0)
 
 ## Runtime Initialization Flow
 
-When `<DuckProvider>` mounts:
+When `<DuckUIProvider>` mounts:
 
 ```
 1. DuckDBManager.initialize()
@@ -28,14 +25,16 @@ When `<DuckProvider>` mounts:
    ├── Creates a Web Worker
    └── Instantiates AsyncDuckDB
 
-2. ConnectionPool(manager, { maxSize })
+2. ConnectionPool(manager)
    └── Ready to hand out connections on acquire()
 
-3. For each source in config.sources:
-   └── SourceLoader.load(db, conn, sourceConfig)
-       ├── 'file'  → FileSource.load()     → registerFileBuffer + CREATE TABLE
-       ├── 'url'   → URLSource.load()      → fetch + registerFileBuffer + CREATE TABLE
-       └── 'gateway'/'postgres'/... → GatewaySource.load() → fetch endpoint + register + CREATE TABLE
+3. For each key in data prop:
+   └── loadData(db, conn, data)
+       ├── Array of objects → JSON string → registerFileBuffer → CREATE TABLE
+       ├── { url }          → fetch → registerFileBuffer → CREATE TABLE
+       ├── { url, format: 'parquet' } → registerFileURL → HTTP range reads
+       ├── { fetch }        → call fn → JSON string → registerFileBuffer → CREATE TABLE
+       └── File             → registerFileBuffer → CREATE TABLE
 
 4. status = 'ready'
    └── Children render, hooks can execute queries
@@ -46,7 +45,7 @@ When `<DuckProvider>` mounts:
 When a component calls `useQuery(sql)`:
 
 ```
-1. useQuery checks DuckProvider status === 'ready'
+1. useQuery checks DuckUIProvider status === 'ready'
 
 2. Build effective SQL:
    ├── If filters are active and noFilter !== true:
@@ -67,7 +66,7 @@ When a component calls `useQuery(sql)`:
 
 5. Cache the result
 
-6. Return { data, loading: false, error: null, refetch, effectiveSql }
+6. Return { data, loading: false, error: null, refetch }
 ```
 
 ## Filter Flow
@@ -119,7 +118,7 @@ Both queries run in parallel. Only the current page of rows is loaded into JavaS
 ```
 ┌─────────────────────────┐
 │  Main Thread (React)    │
-│  ├── DuckProvider       │
+│  ├── DuckUIProvider     │
 │  ├── Components/Hooks   │
 │  └── QueryResults (JS)  │
 └─────────┬───────────────┘
@@ -134,6 +133,6 @@ Both queries run in parallel. Only the current page of rows is loaded into JavaS
 ```
 
 - DuckDB runs entirely in a Web Worker (no main thread blocking)
-- Table data lives in WASM memory, configurable via `memoryLimit` (default: 256 MB)
+- Table data lives in WASM memory (default: 256 MB)
 - Query results are serialized and sent back to the main thread as JavaScript objects
-- The `ConnectionPool` manages up to `maxSize` concurrent connections (default: 4)
+- The `ConnectionPool` manages up to 4 concurrent connections by default

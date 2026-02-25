@@ -64,28 +64,24 @@ export async function POST(request: NextRequest) {
 // app/dashboard/page.tsx
 'use client'
 
-import { DuckProvider, DataTable, Chart, KPICard } from '@duck_ui/embed'
+import { DuckUIProvider, DataTable, Chart, KPICard } from '@duck_ui/embed'
+
+function gatewayFetch(queryKey: string) {
+  return {
+    fetch: () => fetch('/api/pg', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: queryKey }),
+    }).then(r => r.json()),
+  }
+}
 
 export default function DashboardPage() {
   return (
-    <DuckProvider
-      config={{
-        sources: [
-          {
-            type: 'postgres',
-            name: 'orders',
-            endpoint: '/api/pg',
-            query: 'orders',
-          },
-          {
-            type: 'postgres',
-            name: 'revenue',
-            endpoint: '/api/pg',
-            query: 'revenue_by_month',
-          },
-        ],
-      }}
-    >
+    <DuckUIProvider data={{
+      orders: gatewayFetch('orders'),
+      revenue: gatewayFetch('revenue_by_month'),
+    }}>
       <h1>Sales Dashboard</h1>
 
       <KPICard
@@ -101,14 +97,14 @@ export default function DashboardPage() {
       />
 
       <DataTable sql="SELECT * FROM orders" pageSize={25} sortable />
-    </DuckProvider>
+    </DuckUIProvider>
   )
 }
 ```
 
 ## Key Points
 
-1. **`'use client'`** — DuckProvider and all Duck-UI components require client-side rendering (DuckDB-WASM runs in the browser)
+1. **`'use client'`** — DuckUIProvider and all Duck-UI components require client-side rendering (DuckDB-WASM runs in the browser)
 2. **Relative endpoint** — `/api/pg` works because Next.js serves both the page and the API route from the same origin
 3. **No CORS needed** — same-origin requests don't require CORS headers
 4. **Query keys, not SQL** — the frontend sends `"orders"` (a key), not raw SQL. The backend maps it to actual SQL.
@@ -137,29 +133,3 @@ export async function POST(request: NextRequest) {
 ```
 
 No extra headers needed on the frontend — NextAuth session cookies are sent automatically with same-origin requests.
-
-## With Multiple Databases
-
-```ts
-// app/api/pg/route.ts
-const pools = {
-  main: new Pool({ connectionString: process.env.MAIN_DATABASE_URL }),
-  analytics: new Pool({ connectionString: process.env.ANALYTICS_DATABASE_URL }),
-}
-
-const ALLOWED_QUERIES: Record<string, { db: keyof typeof pools; sql: string }> = {
-  orders: { db: 'main', sql: 'SELECT * FROM orders' },
-  events: { db: 'analytics', sql: 'SELECT * FROM events LIMIT 100000' },
-}
-
-export async function POST(request: NextRequest) {
-  const { query } = await request.json()
-  const entry = ALLOWED_QUERIES[query]
-  if (!entry) {
-    return NextResponse.json({ error: 'Unknown query' }, { status: 400 })
-  }
-
-  const result = await pools[entry.db].query(entry.sql)
-  return NextResponse.json(result.rows)
-}
-```

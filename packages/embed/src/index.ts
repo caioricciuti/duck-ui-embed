@@ -7,7 +7,7 @@ export type { DuckUIProviderProps } from './provider/DuckUIProvider'
 // ---------------------------------------------------------------------------
 // Hooks
 // ---------------------------------------------------------------------------
-export { useDuckUI, useTheme, useLicense } from './provider/hooks'
+export { useDuckUI, useTheme } from './provider/hooks'
 
 // ---------------------------------------------------------------------------
 // Components

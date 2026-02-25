@@ -17,11 +17,10 @@ export function ExportButton({
   label = 'Export',
   className,
 }: ExportButtonProps) {
-  const { theme, license } = useDuckInternal()
-  const isPro = license !== null
+  const { theme } = useDuckInternal()
 
   const handleExport = useCallback(() => {
-    if (!data || data.rowCount === 0 || !isPro) return
+    if (!data || data.rowCount === 0) return
 
     let content: string
     let mimeType: string
@@ -62,10 +61,9 @@ export function ExportButton({
     a.click()
     document.body.removeChild(a)
     URL.revokeObjectURL(url)
-  }, [data, format, fileName, isPro])
+  }, [data, format, fileName])
 
-  const noData = !data || data.rowCount === 0
-  const disabled = noData || !isPro
+  const disabled = !data || data.rowCount === 0
 
   return (
     <div style={{ position: 'relative', display: 'inline-block' }}>
@@ -73,7 +71,6 @@ export function ExportButton({
         onClick={handleExport}
         disabled={disabled}
         className={className}
-        title={!isPro ? 'Export requires a Pro license' : undefined}
         style={{
           display: 'inline-flex',
           alignItems: 'center',
@@ -88,7 +85,6 @@ export function ExportButton({
           cursor: disabled ? 'not-allowed' : 'pointer',
           fontFamily: theme.fontFamily,
           lineHeight: 1.5,
-          opacity: !isPro ? 0.7 : 1,
         }}
       >
         <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -101,9 +97,6 @@ export function ExportButton({
           />
         </svg>
         {label}
-        {!isPro && (
-          <span style={{ fontSize: 10, fontWeight: 600, color: theme.primaryColor, marginLeft: 2 }}>PRO</span>
-        )}
       </button>
     </div>
   )

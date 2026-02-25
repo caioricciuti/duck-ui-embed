@@ -1,6 +1,6 @@
 # Example: Sales Dashboard
 
-A complete, copy-paste-ready sales dashboard using the free Duck-UI packages.
+A complete, copy-paste-ready sales dashboard.
 
 ## Install
 
@@ -12,45 +12,33 @@ bun add @duck_ui/embed @duckdb/duckdb-wasm
 
 ```tsx
 import {
-  DuckProvider,
+  DuckUIProvider,
   DataTable,
   Chart,
   KPICard,
   FilterBar,
-  SelectFilter,
-  DateRangeFilter,
-  RangeFilter,
   ExportButton,
-  useQuery,
+  useDuckUI,
 } from '@duck_ui/embed'
+import { useEffect, useState } from 'react'
+import type { QueryResult } from '@duck_ui/embed'
 
 function SalesDashboard() {
   return (
-    <DuckProvider
-      config={{
-        sources: [
-          { type: 'url', name: 'sales', url: '/data/sales.parquet' },
-        ],
-      }}
-    >
+    <DuckUIProvider data={{
+      sales: { url: '/data/sales.parquet', format: 'parquet' },
+    }}>
       <h1>Sales Dashboard</h1>
       <Filters />
       <KPIs />
       <Charts />
       <SalesTable />
-    </DuckProvider>
+    </DuckUIProvider>
   )
 }
 
 function Filters() {
-  return (
-    <FilterBar>
-      <SelectFilter column="region" source="sales" label="Region" />
-      <SelectFilter column="category" source="sales" label="Category" />
-      <DateRangeFilter column="order_date" label="Date" />
-      <RangeFilter column="amount" min={0} max={50000} step={100} label="Amount" />
-    </FilterBar>
-  )
+  return <FilterBar auto="sales" />
 }
 
 function KPIs() {
@@ -60,7 +48,7 @@ function KPIs() {
         sql="SELECT SUM(revenue) AS value FROM sales"
         label="Total Revenue"
         format="currency"
-        comparisonSql="SELECT SUM(revenue) AS value FROM sales WHERE EXTRACT(YEAR FROM order_date) = 2023"
+        compareSql="SELECT SUM(revenue) AS value FROM sales WHERE EXTRACT(YEAR FROM order_date) = 2024"
         sparklineSql="SELECT EXTRACT(MONTH FROM order_date) AS m, SUM(revenue) AS v FROM sales GROUP BY 1 ORDER BY 1"
       />
       <KPICard
@@ -97,7 +85,6 @@ function Charts() {
         `}
         type="bar"
         height={350}
-        labels={['Revenue', 'Profit']}
       />
       <Chart
         sql={`
@@ -114,7 +101,14 @@ function Charts() {
 }
 
 function SalesTable() {
-  const { data } = useQuery('SELECT * FROM sales LIMIT 0')
+  const { query, status } = useDuckUI()
+  const [data, setData] = useState<QueryResult | null>(null)
+
+  useEffect(() => {
+    if (status === 'ready') {
+      query('SELECT * FROM sales').then(setData)
+    }
+  }, [status])
 
   return (
     <div>
@@ -126,7 +120,6 @@ function SalesTable() {
         sql="SELECT order_id, customer_id, region, category, revenue, profit, order_date FROM sales"
         pageSize={25}
         sortable
-        resizable
       />
     </div>
   )
@@ -137,8 +130,8 @@ export default SalesDashboard
 
 ## What This Demonstrates
 
-- **DuckProvider** with a Parquet URL source
-- **FilterBar** with 4 filter types (SelectFilter from source, DateRangeFilter, RangeFilter)
+- **DuckUIProvider** with a Parquet URL source
+- **FilterBar** with auto-detected filters from schema
 - **KPICard** with format presets, comparison, and sparkline
 - **Chart** with multi-series bar chart and single-series bar chart
 - **DataTable** with SQL-level pagination and sorting
@@ -157,7 +150,6 @@ The example assumes a `sales.parquet` file with these columns:
 | category | `VARCHAR` | Product category |
 | revenue | `DOUBLE` | Order revenue |
 | profit | `DOUBLE` | Order profit |
-| amount | `DOUBLE` | Order amount |
 | order_date | `DATE` | Order date |
 
 Replace the URL and column names to match your data.
