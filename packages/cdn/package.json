@@ -1,0 +1,21 @@
+{
+  "name": "@duck_ui/cdn",
+  "version": "0.3.1",
+  "description": "CDN bundle: <script> tag includes all duck-* elements + DuckUI core",
+  "main": "dist/duck-ui.min.js",
+  "types": "dist/duck-ui.d.ts",
+  "scripts": {
+    "build": "node build.mjs",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@duck_ui/core": "workspace:*",
+    "@duck_ui/elements": "workspace:*"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "license": "Apache-2.0"
+}

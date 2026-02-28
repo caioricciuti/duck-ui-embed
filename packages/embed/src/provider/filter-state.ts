@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { FilterValue } from '../engine/filter-inject'
+import type { FilterValue } from '@duck_ui/core'
 
 export interface FilterStore {
   filters: Record<string, FilterValue>

@@ -2,21 +2,70 @@
 
 ## Package Structure
 
-`@duck_ui/embed` is a single package containing everything:
+Duck-UI is a monorepo with four packages. All shared logic lives in `@duck_ui/core`; the React and Web Component packages are thin wrappers.
 
 ```
-packages/embed/src/
-├── provider/       DuckUIProvider, context, hooks, filter state (Zustand)
-├── engine/         DuckDB init, connection pool, query executor, cache, filter injection, schema
-├── components/     Chart, DataTable, KPICard, FilterBar, ExportButton, filter components
-└── charts/         uPlot wrappers (UChart, PieChart, Sparkline), presets, plugins, theme
+@duck_ui/core (pure JS, zero deps except uplot)
+  ├── Engine: DuckDBManager → ConnectionPool → QueryExecutor → QueryCache → FilterInjector
+  ├── Charts: buildChartOptions, createChart, drawPie, createSparkline
+  └── Utils: formatCellValue, resolveFormatter, exportToFile, observeSize
+
+@duck_ui/embed (React, imports core)
+  └── DuckUIProvider → React context → hooks → thin component wrappers
+
+@duck_ui/elements (Web Components, imports core)
+  └── DuckProviderElement → DuckUI engine → child elements query via provider
+
+@duck_ui/cdn (IIFE bundle)
+  └── Bundles core + elements, auto-registers all custom elements
+```
+
+### Directory Layout
+
+```
+packages/
+├── core/src/               @duck_ui/core — Pure JS, zero framework deps
+│   ├── duck-ui.ts          DuckUI imperative class
+│   ├── engine/             DuckDB init, connection pool, query executor, cache, filter injection, schema
+│   ├── charts/             uPlot chart factories, presets, plugins, theme
+│   └── utils/              formatCellValue, resolveFormatter, exportToFile, observeSize
+│
+├── embed/src/              @duck_ui/embed — React bindings
+│   ├── provider/           DuckUIProvider, context, hooks, filter state (Zustand)
+│   ├── components/         Chart, DataTable, KPICard, FilterBar, ExportButton, filter components
+│   └── charts/             React wrappers (UChart, PieChart, Sparkline) using core factories
+│
+├── elements/src/           @duck_ui/elements — Web Components / Custom Elements
+│   ├── register.ts         customElements.define for all elements
+│   ├── base.ts             DuckElement abstract base class
+│   ├── duck-provider.ts    <duck-provider> root element
+│   ├── duck-chart.ts       <duck-chart>
+│   ├── duck-table.ts       <duck-table>
+│   ├── duck-kpi.ts         <duck-kpi>
+│   ├── duck-dashboard.ts   <duck-dashboard> + <duck-panel>
+│   ├── duck-filter-bar.ts  <duck-filter-bar>
+│   ├── duck-select-filter.ts
+│   ├── duck-range-filter.ts
+│   ├── duck-date-filter.ts
+│   └── duck-export.ts      <duck-export>
+│
+└── cdn/                    @duck_ui/cdn — Pre-bundled IIFE
+    ├── src/index.ts        Auto-registers elements, re-exports core
+    └── build.mjs           esbuild config
+```
+
+### Dependency Graph
+
+```
+@duck_ui/cdn ──→ @duck_ui/elements ──→ @duck_ui/core ──→ @duckdb/duckdb-wasm
+                 @duck_ui/embed    ──→ @duck_ui/core ──→ @duckdb/duckdb-wasm
 ```
 
 Peer dependency: `@duckdb/duckdb-wasm` (>=1.28.0)
 
 ## Runtime Initialization Flow
 
-When `<DuckUIProvider>` mounts:
+The initialization flow is the same regardless of integration mode. In React, it runs when `<DuckUIProvider>` mounts. In Web Components, when `<duck-provider>.load()` is called. With the core API, when `DuckUI.init()` is called.
 
 ```
 1. DuckDBManager.initialize()
@@ -116,23 +165,25 @@ Both queries run in parallel. Only the current page of rows is loaded into JavaS
 ## Memory Model
 
 ```
-┌─────────────────────────┐
-│  Main Thread (React)    │
-│  ├── DuckUIProvider     │
-│  ├── Components/Hooks   │
-│  └── QueryResults (JS)  │
-└─────────┬───────────────┘
+┌────────────────────────────────────────┐
+│  Main Thread                           │
+│  ├── React: DuckUIProvider + hooks     │  ← @duck_ui/embed
+│  ├── Web Components: <duck-provider>   │  ← @duck_ui/elements
+│  ├── Imperative: DuckUI class          │  ← @duck_ui/core
+│  └── QueryResults (JS objects)         │
+└─────────┬──────────────────────────────┘
           │ postMessage
-┌─────────▼───────────────┐
-│  Web Worker             │
-│  └── DuckDB-WASM        │
-│      ├── Tables (WASM)  │
-│      ├── Query Engine   │
-│      └── Memory Limit   │
-└─────────────────────────┘
+┌─────────▼──────────────────────────────┐
+│  Web Worker                            │
+│  └── DuckDB-WASM                       │
+│      ├── Tables (WASM memory)          │
+│      ├── Query Engine                  │
+│      └── Memory Limit (256 MB default) │
+└────────────────────────────────────────┘
 ```
 
 - DuckDB runs entirely in a Web Worker (no main thread blocking)
 - Table data lives in WASM memory (default: 256 MB)
 - Query results are serialized and sent back to the main thread as JavaScript objects
 - The `ConnectionPool` manages up to 4 concurrent connections by default
+- All three integration modes (React, Web Components, imperative) share the same core engine

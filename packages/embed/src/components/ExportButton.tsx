@@ -1,6 +1,6 @@
 import { useCallback } from 'react'
+import type { QueryResult } from '@duck_ui/core'
 import { useDuckInternal } from '../provider/hooks'
-import type { QueryResult } from '../engine/query'
 
 export interface ExportButtonProps {
   data: QueryResult | null

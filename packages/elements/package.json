@@ -1,0 +1,31 @@
+{
+  "name": "@duck_ui/elements",
+  "version": "0.3.1",
+  "description": "Web Components for DuckDB-WASM dashboards — no framework required",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "sideEffects": true,
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "tsc --noEmit",
+    "test": "vitest run",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@duck_ui/core": "workspace:*"
+  },
+  "peerDependencies": {
+    "@duckdb/duckdb-wasm": ">=1.28.0"
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "license": "Apache-2.0"
+}

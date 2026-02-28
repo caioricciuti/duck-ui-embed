@@ -1,9 +1,10 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
+import { lightTheme } from '@duck_ui/core'
+import type { QueryResult } from '@duck_ui/core'
+import { QueryExecutor } from '@duck_ui/core'
 import { KPICard } from './KPICard'
 import { DuckUIContext, type DuckUIContextValue } from '../provider/context'
-import { lightTheme } from '../charts/theme'
-import { QueryExecutor, type QueryResult } from '../engine/query'
 
 const defaultResult: QueryResult = {
   rows: [{ value: 1234 }],

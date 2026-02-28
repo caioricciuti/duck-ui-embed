@@ -2,7 +2,10 @@
   "name": "duck-ui-embed",
   "private": true,
   "workspaces": [
-    "packages/embed"
+    "packages/core",
+    "packages/embed",
+    "packages/elements",
+    "packages/cdn"
   ],
   "scripts": {
     "build": "turbo build",
@@ -19,6 +22,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "jsdom": "^28.1.0",
+    "esbuild": "^0.21",
     "tsup": "^8",
     "turbo": "^2",
     "typescript": "^5.5",

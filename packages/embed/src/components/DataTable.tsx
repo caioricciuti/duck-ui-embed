@@ -6,9 +6,9 @@ import {
   type ColumnDef,
   type ColumnResizeMode,
 } from '@tanstack/react-table'
+import { formatCellValue } from '@duck_ui/core'
+import type { ColumnInfo, DuckTheme } from '@duck_ui/core'
 import { usePaginatedQuery, useDuckInternal } from '../provider/hooks'
-import type { ColumnInfo } from '../engine/query'
-import type { DuckTheme } from '../charts/theme'
 import { Loading } from './shared/Loading'
 import { ErrorDisplay } from './shared/Error'
 import { EmptyState } from './shared/EmptyState'
@@ -24,17 +24,6 @@ export interface DataTableProps {
   tableName?: string
   striped?: boolean
   maxHeight?: number | string
-}
-
-function formatCellValue(value: unknown): string {
-  if (value === null || value === undefined) return '\u2014'
-  if (typeof value === 'number') {
-    return value.toLocaleString(undefined, { maximumFractionDigits: 6 })
-  }
-  if (value instanceof Date) {
-    return value.toLocaleDateString()
-  }
-  return String(value)
 }
 
 function buildColumns(columns: ColumnInfo[]): ColumnDef<RowData, unknown>[] {

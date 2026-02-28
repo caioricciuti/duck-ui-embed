@@ -1,9 +1,9 @@
+import { resolveFormatter } from '@duck_ui/core'
+import type { FormatPreset } from '@duck_ui/core'
 import { useQuery, useDuckInternal, type UseQueryOptions } from '../provider/hooks'
 import { Sparkline } from '../charts/Sparkline'
 import { Loading } from './shared/Loading'
 import { ErrorDisplay } from './shared/Error'
-
-type FormatPreset = 'currency' | 'percent' | 'number' | 'compact'
 
 export interface KPICardProps {
   /** SQL query that returns a single value (first column, first row) */
@@ -24,51 +24,6 @@ export interface KPICardProps {
   className?: string
   /** Table name for filter injection */
   tableName?: string
-}
-
-function resolveFormatter(
-  format: FormatPreset | ((value: number) => string) | undefined,
-  currency?: string,
-): (value: number) => string {
-  if (typeof format === 'function') return format
-  if (!format) return (v) => v.toLocaleString()
-
-  switch (format) {
-    case 'currency':
-      return (v) =>
-        new Intl.NumberFormat(undefined, {
-          style: 'currency',
-          currency: currency ?? 'USD',
-          minimumFractionDigits: 0,
-          maximumFractionDigits: 0,
-        }).format(v)
-
-    case 'percent':
-      return (v) =>
-        new Intl.NumberFormat(undefined, {
-          style: 'percent',
-          minimumFractionDigits: 1,
-          maximumFractionDigits: 1,
-        }).format(v / 100)
-
-    case 'number':
-      return (v) =>
-        new Intl.NumberFormat(undefined, {
-          minimumFractionDigits: 0,
-          maximumFractionDigits: 0,
-        }).format(v)
-
-    case 'compact':
-      return (v) =>
-        new Intl.NumberFormat(undefined, {
-          notation: 'compact',
-          minimumFractionDigits: 1,
-          maximumFractionDigits: 1,
-        }).format(v)
-
-    default:
-      return (v) => v.toLocaleString()
-  }
 }
 
 export function KPICard({

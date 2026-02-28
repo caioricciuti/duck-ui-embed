@@ -1,8 +1,8 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent } from '@testing-library/react'
+import { lightTheme } from '@duck_ui/core'
 import { FilterBar } from './FilterBar'
 import { DuckUIContext, type DuckUIContextValue } from '../provider/context'
-import { lightTheme } from '../charts/theme'
 
 function createMockContext(overrides: Partial<DuckUIContextValue> = {}): DuckUIContextValue {
   return {

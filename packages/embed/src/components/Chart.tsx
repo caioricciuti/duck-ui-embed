@@ -1,10 +1,11 @@
 import { useMemo } from 'react'
+import { queryResultToChartData } from '@duck_ui/core'
+import type { QueryResult } from '@duck_ui/core'
 import { useQuery, useDuckInternal, type UseQueryOptions } from '../provider/hooks'
 import { UChart, type UChartProps } from '../charts/UChart'
 import { Loading } from './shared/Loading'
 import { ErrorDisplay } from './shared/Error'
 import { EmptyState } from './shared/EmptyState'
-import type { QueryResult } from '../engine/query'
 
 export interface ChartProps extends Omit<UChartProps, 'data' | 'labels' | 'xLabels'> {
   /** SQL query to execute */
@@ -13,41 +14,6 @@ export interface ChartProps extends Omit<UChartProps, 'data' | 'labels' | 'xLabe
   className?: string
   /** Table name for filter injection */
   tableName?: string
-}
-
-interface ChartDataResult {
-  data: [number[], ...number[][]]
-  xLabels?: string[]
-}
-
-function queryResultToChartData(result: QueryResult): ChartDataResult {
-  const columns = result.columns
-  if (columns.length < 2) return { data: [[]] }
-
-  const firstColValues = result.rows.map((row) => row[columns[0].name])
-  const isCategorical = firstColValues.some((v) => typeof v === 'string')
-
-  let xValues: number[]
-  let xLabels: string[] | undefined
-
-  if (isCategorical) {
-    xLabels = firstColValues.map((v) => String(v ?? ''))
-    xValues = firstColValues.map((_, i) => i)
-  } else {
-    xValues = firstColValues.map((v) => (typeof v === 'number' ? v : 0))
-  }
-
-  const series = columns.slice(1).map((col) =>
-    result.rows.map((row) => {
-      const val = row[col.name]
-      return typeof val === 'number' ? val : 0
-    })
-  )
-
-  return {
-    data: [xValues, ...series] as [number[], ...number[][]],
-    xLabels,
-  }
 }
 
 export function Chart({ sql, className, tableName, ...chartOptions }: ChartProps) {

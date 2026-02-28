@@ -1,0 +1,31 @@
+{
+  "name": "@duck_ui/core",
+  "version": "0.3.1",
+  "description": "Pure JS engine for DuckDB-WASM: init, query, cache, charts — no framework required",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "sideEffects": ["*.css"],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "lint": "tsc --noEmit",
+    "test": "vitest run",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "uplot": "^1.6.31"
+  },
+  "peerDependencies": {
+    "@duckdb/duckdb-wasm": ">=1.28.0"
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "license": "Apache-2.0"
+}

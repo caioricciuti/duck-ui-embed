@@ -1,6 +1,8 @@
 # @duck_ui/embed API Reference
 
-Complete API reference for the `@duck_ui/embed` package.
+React bindings for Duck-UI. This package provides `DuckUIProvider`, hooks, and component wrappers built on top of `@duck_ui/core`.
+
+> Engine types (`QueryResult`, `FilterValue`, `DuckTheme`, etc.) and chart factories are defined in [`@duck_ui/core`](./core.md). This page covers the React-specific API.
 
 ```bash
 bun add @duck_ui/embed @duckdb/duckdb-wasm
@@ -13,6 +15,7 @@ bun add @duck_ui/embed @duckdb/duckdb-wasm
 - [Provider](#provider)
 - [Hooks](#hooks)
 - [Components](#components)
+- [Layout](#layout)
 - [Filters](#filters)
 - [Types](#types)
 
@@ -254,6 +257,69 @@ const { data } = useQuery('SELECT * FROM sales')
 
 ---
 
+## Layout
+
+### Dashboard
+
+CSS Grid layout container with responsive breakpoints. Composes Chart, DataTable, KPICard, and FilterBar into a themed dashboard.
+
+```tsx
+import { Dashboard } from '@duck_ui/embed'
+```
+
+#### DashboardProps
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `children` | `ReactNode` | **required** | Dashboard.Panel children |
+| `columns` | `1 \| 2 \| 3 \| 4` | `2` | Grid columns at full width |
+| `gap` | `number` | `16` | Gap between panels (px) |
+| `padding` | `number` | `24` | Container padding (px) |
+| `className` | `string` | -- | CSS class |
+
+#### Dashboard.Panel
+
+Grid item wrapper.
+
+#### DashboardPanelProps
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `children` | `ReactNode` | **required** | Panel content |
+| `span` | `number` | `1` | Column span |
+| `rowSpan` | `number` | `1` | Row span |
+| `className` | `string` | -- | CSS class |
+
+**Responsive breakpoints** (auto-reduces columns based on container width):
+- `< 480px` → 1 column
+- `< 768px` → max 2 columns
+- `< 1024px` → max 3 columns
+- `>= 1024px` → columns as specified
+
+```tsx
+<DuckUIProvider data={{ orders }}>
+  <Dashboard columns={3} gap={16}>
+    <Dashboard.Panel span={2}>
+      <FilterBar auto="orders" />
+    </Dashboard.Panel>
+    <Dashboard.Panel>
+      <KPICard sql="SELECT count(*) as value FROM orders" label="Orders" />
+    </Dashboard.Panel>
+    <Dashboard.Panel span={2}>
+      <Chart sql="SELECT status, count(*) FROM orders GROUP BY 1" type="bar" />
+    </Dashboard.Panel>
+    <Dashboard.Panel>
+      <Chart sql="SELECT date, sum(total) FROM orders GROUP BY 1" type="line" />
+    </Dashboard.Panel>
+    <Dashboard.Panel span={3}>
+      <DataTable sql="SELECT * FROM orders" pageSize={20} sortable />
+    </Dashboard.Panel>
+  </Dashboard>
+</DuckUIProvider>
+```
+
+---
+
 ## Filters
 
 All filter components integrate with the DuckUIProvider filter system. When a filter value changes, all queries automatically re-execute with new WHERE clauses injected.
@@ -364,83 +430,13 @@ Calendar-based date range picker.
 
 ## Types
 
-### QueryResult
+All core types (`QueryResult`, `ColumnInfo`, `FilterValue`, `DuckTheme`, `ChartTheme`, `AxisOptions`) are defined in `@duck_ui/core` and re-exported from `@duck_ui/embed`. See the [`@duck_ui/core` API Reference](./core.md#types) for full type definitions.
+
+### Quick Reference
 
 ```ts
-interface QueryResult {
-  rows: Record<string, unknown>[]
-  columns: ColumnInfo[]
-  rowCount: number
-  executionTime: number  // milliseconds
-}
-```
-
-### ColumnInfo
-
-```ts
-interface ColumnInfo {
-  name: string
-  type: string
-  nullable: boolean
-}
-```
-
-### FilterValue
-
-```ts
-type FilterValue =
-  | string
-  | number
-  | boolean
-  | string[]
-  | number[]
-  | { min: number; max: number }
-  | { start: string; end: string }
-  | null
-```
-
-### ChartTheme
-
-```ts
-interface ChartTheme {
-  background: string
-  textColor: string
-  gridColor: string
-  axisColor: string
-  palette: string[]
-  fontFamily: string
-  fontSize: number
-}
-```
-
-### DuckTheme
-
-Extends `ChartTheme` with component-level styling:
-
-```ts
-interface DuckTheme extends ChartTheme {
-  surfaceColor: string
-  borderColor: string
-  hoverColor: string
-  primaryColor: string
-  errorColor: string
-  errorBgColor: string
-  mutedTextColor: string
-  stripeColor: string
-  successColor: string
-  successBgColor: string
-  dangerColor: string
-  dangerBgColor: string
-}
-```
-
-### AxisOptions
-
-```ts
-interface AxisOptions {
-  label?: string
-  format?: 'number' | 'currency' | 'percent' | 'date' | ((value: number) => string)
-}
+import type { QueryResult, FilterValue, DuckTheme } from '@duck_ui/embed'
+// These are re-exports from @duck_ui/core
 ```
 
 ### Built-in Themes

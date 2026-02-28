@@ -30,11 +30,13 @@ export { RangeFilter } from './components/filters/RangeFilter'
 export { DateRangeFilter } from './components/filters/DateRangeFilter'
 
 export { ExportButton } from './components/ExportButton'
+export type { ExportButtonProps } from './components/ExportButton'
+
+export { Dashboard } from './components/Dashboard'
+export type { DashboardProps, DashboardPanelProps } from './components/Dashboard'
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
-export type { DataInput } from './engine/data-loader'
-export type { QueryResult, ColumnInfo } from './engine/query'
-export type { FilterValue } from './engine/filter-inject'
-export type { ChartTheme, DuckTheme } from './charts/theme'
+export type { DataInput, QueryResult, ColumnInfo, FilterValue, ChartTheme, DuckTheme } from '@duck_ui/core'
+export { lightTheme, darkTheme } from '@duck_ui/core'

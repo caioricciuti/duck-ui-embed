@@ -1,5 +1,5 @@
+import type { DuckTheme } from '@duck_ui/core'
 import { useTheme } from '../../provider/hooks'
-import type { DuckTheme } from '../../charts/theme'
 
 export interface ErrorDisplayProps {
   error: Error

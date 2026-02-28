@@ -3,7 +3,7 @@ import { useDuckInternal, useSchema } from '../provider/hooks'
 import { SelectFilter } from './filters/SelectFilter'
 import { RangeFilter } from './filters/RangeFilter'
 import { DateRangeFilter } from './filters/DateRangeFilter'
-import { detectFilterType } from './filters/auto-detect'
+import { detectFilterType } from '@duck_ui/core'
 
 // ---------------------------------------------------------------------------
 // Types

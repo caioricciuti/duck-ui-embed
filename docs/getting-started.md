@@ -1,26 +1,41 @@
 # Getting Started
 
-Get a SQL-powered analytics dashboard running in your React app in 5 minutes.
+Get a SQL-powered analytics dashboard running in 5 minutes. Pick the approach that fits your stack: React, Web Components, or CDN.
 
 ## Prerequisites
 
-- Node.js 18+
-- React 18+
+- Node.js 18+ (not needed for CDN)
 - A package manager (bun recommended)
 
 ## Installation
+
+### React
 
 ```bash
 bun add @duck_ui/embed @duckdb/duckdb-wasm
 ```
 
-Or with npm:
+### Web Components (Vanilla JS, Vue, Svelte, etc.)
 
 ```bash
-npm install @duck_ui/embed @duckdb/duckdb-wasm
+bun add @duck_ui/elements @duckdb/duckdb-wasm
 ```
 
-## Minimal Example
+### Core Only (build your own UI)
+
+```bash
+bun add @duck_ui/core @duckdb/duckdb-wasm
+```
+
+### CDN (no bundler)
+
+```html
+<script src="https://unpkg.com/@duck_ui/cdn/dist/duck-ui.min.js"></script>
+```
+
+The CDN bundle includes `@duck_ui/core` + `@duck_ui/elements` with DuckDB-WASM. All custom elements are auto-registered.
+
+## Minimal Example (React)
 
 Wrap your app with `DuckUIProvider`, pass data, and drop in components:
 
@@ -42,6 +57,71 @@ function App() {
 ```
 
 That's it. DuckDB-WASM boots in a Web Worker, loads the array into a `orders` table, and the `DataTable` renders it with pagination and sorting.
+
+## Minimal Example (Web Components)
+
+```html
+<script type="module">
+  import { register } from '@duck_ui/elements'
+  register()
+</script>
+
+<duck-provider id="app">
+  <duck-table sql="SELECT * FROM orders" page-size="25" sortable></duck-table>
+</duck-provider>
+
+<script type="module">
+  document.getElementById('app').load({
+    orders: [
+      { id: 1, product: 'Widget', status: 'shipped', total: 99.50 },
+      { id: 2, product: 'Gadget', status: 'pending', total: 149.00 },
+    ],
+  })
+</script>
+```
+
+## Minimal Example (CDN)
+
+No bundler, no npm -- just a `<script>` tag:
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://unpkg.com/@duck_ui/cdn/dist/duck-ui.min.js"></script>
+</head>
+<body>
+  <duck-provider id="app">
+    <duck-table sql="SELECT * FROM orders" page-size="25" sortable></duck-table>
+  </duck-provider>
+
+  <script>
+    document.getElementById('app').load({
+      orders: [
+        { id: 1, product: 'Widget', total: 99.50 },
+        { id: 2, product: 'Gadget', total: 149.00 },
+      ],
+    })
+  </script>
+</body>
+</html>
+```
+
+## Minimal Example (Core Only)
+
+Use the imperative `DuckUI` class directly -- no components, no DOM:
+
+```ts
+import { DuckUI } from '@duck_ui/core'
+
+const ui = new DuckUI()
+await ui.init({ orders: [{ id: 1, product: 'Widget', total: 99.50 }] })
+
+const result = await ui.query('SELECT count(*) as n FROM orders')
+console.log(result.rows) // [{ n: 1 }]
+
+await ui.destroy()
+```
 
 ## Add a Chart
 
@@ -173,4 +253,6 @@ module.exports = {
 - [Gateway Pattern](./guides/gateway-pattern.md) — connect to Postgres, MySQL, ClickHouse via your backend
 - [Filters](./guides/filters.md) — deep dive into the filter system
 - [Charts](./guides/charts.md) — all chart types and customization
-- [API Reference](./api/embed.md) — full API reference
+- [Core API Reference](./api/core.md) — DuckUI class, engine, chart factories
+- [Embed API Reference](./api/embed.md) — React components and hooks
+- [Elements API Reference](./api/elements.md) — Web Components reference

@@ -7,6 +7,6 @@ export default defineConfig({
   splitting: true,
   treeshake: true,
   clean: true,
-  external: ['react', 'react-dom', '@duckdb/duckdb-wasm'],
+  external: ['react', 'react-dom', '@duckdb/duckdb-wasm', '@duck_ui/core'],
   sourcemap: true,
 })

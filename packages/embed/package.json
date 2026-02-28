@@ -1,17 +1,17 @@
 {
   "name": "@duck_ui/embed",
-  "version": "0.2.0",
+  "version": "0.3.1",
   "description": "Drop-in SQL-powered React components backed by DuckDB-WASM",
   "author": "Duck-UI",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ibero-data/duck-ui-embed",
+    "url": "https://github.com/caioricciuti/duck-ui-embed",
     "directory": "packages/embed"
   },
-  "homepage": "https://github.com/ibero-data/duck-ui-embed",
-  "bugs": "https://github.com/ibero-data/duck-ui-embed/issues",
+  "homepage": "https://github.com/caioricciuti/duck-ui-embed",
+  "bugs": "https://github.com/caioricciuti/duck-ui-embed/issues",
   "keywords": ["duckdb", "analytics", "react", "embed", "dashboard", "sql", "charts"],
-  "sideEffects": false,
+  "sideEffects": ["*.css"],
   "publishConfig": {
     "access": "public"
   },
@@ -33,9 +33,9 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "uplot": "^1.6.31",
-    "zustand": "^4.5.0",
-    "@tanstack/react-table": "^8.21.3"
+    "@duck_ui/core": "workspace:*",
+    "@tanstack/react-table": "^8.21.3",
+    "zustand": "^4.5.0"
   },
   "peerDependencies": {
     "react": ">=18",

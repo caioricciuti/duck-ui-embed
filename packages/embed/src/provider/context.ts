@@ -1,9 +1,5 @@
 import { createContext } from 'react'
-import type { QueryExecutor, QueryResult } from '../engine/query'
-import type { SchemaInspector } from '../engine/schema'
-import type { QueryCache } from '../engine/cache'
-import type { FilterValue } from '../engine/filter-inject'
-import type { DuckTheme } from '../charts/theme'
+import type { QueryExecutor, QueryResult, SchemaInspector, QueryCache, FilterValue, DuckTheme } from '@duck_ui/core'
 
 export interface DuckUIContextValue {
   /** Execute a SQL query and get results */

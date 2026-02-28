@@ -1,15 +1,9 @@
 import { useEffect, useRef, useState, useCallback, type ReactNode } from 'react'
 import { useStore } from 'zustand'
-import { DuckDBManager } from '../engine/init'
-import { ConnectionPool } from '../engine/pool'
-import { QueryExecutor, type QueryResult } from '../engine/query'
-import { SchemaInspector } from '../engine/schema'
-import { QueryCache } from '../engine/cache'
-import { loadData, dropTables, type DataInput } from '../engine/data-loader'
+import { DuckDBManager, ConnectionPool, QueryExecutor, SchemaInspector, QueryCache, loadData, dropTables, lightTheme } from '@duck_ui/core'
+import type { DataInput, QueryResult, DuckTheme } from '@duck_ui/core'
 import { DuckUIContext, type DuckUIContextValue } from './context'
 import { createFilterStore } from './filter-state'
-import type { DuckTheme } from '../charts/theme'
-import { lightTheme } from '../charts/theme'
 
 // ---------------------------------------------------------------------------
 // Props

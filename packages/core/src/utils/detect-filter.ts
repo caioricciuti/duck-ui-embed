@@ -1,7 +1,10 @@
-import type { ColumnSchema } from '../../engine/schema'
+import type { ColumnSchema } from '../engine/schema'
 
 export type FilterType = 'select' | 'multiselect' | 'range' | 'daterange' | 'text'
 
+/**
+ * Auto-detect the appropriate filter type from a column's schema type.
+ */
 export function detectFilterType(column: ColumnSchema): FilterType {
   const type = column.type.toLowerCase()
 

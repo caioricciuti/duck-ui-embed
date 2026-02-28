@@ -1,8 +1,6 @@
 import { useContext, useEffect, useState, useCallback, useMemo } from 'react'
-import type { QueryResult } from '../engine/query'
-import type { TableSchema } from '../engine/schema'
-import type { DuckTheme } from '../charts/theme'
-import { FilterInjector } from '../engine/filter-inject'
+import { FilterInjector } from '@duck_ui/core'
+import type { QueryResult, TableSchema, DuckTheme } from '@duck_ui/core'
 import { DuckUIContext, type DuckUIContextValue } from './context'
 
 // ---------------------------------------------------------------------------

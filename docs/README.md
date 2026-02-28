@@ -1,11 +1,20 @@
-# Duck-UI Embed Documentation
+# Duck-UI Documentation
 
-Drop-in SQL-powered React components backed by DuckDB-WASM. One package. One provider. Pass data, write SQL, get dashboards.
+SQL-powered dashboards backed by DuckDB-WASM. Framework-agnostic -- use React, Web Components, or a plain `<script>` tag.
+
+## Packages
+
+| Package | Description | Use When |
+|---------|-------------|----------|
+| `@duck_ui/core` | Pure JS engine + chart factories (no framework deps) | Building custom integrations or non-React frameworks |
+| `@duck_ui/embed` | React bindings (imports from core) | React / Next.js apps |
+| `@duck_ui/elements` | Web Components / Custom Elements (imports from core) | Vanilla JS, Vue, Svelte, or any framework |
+| `@duck_ui/cdn` | Pre-bundled IIFE script for CDN usage | No bundler, plain HTML pages |
 
 ## Getting Started
 
-- [Getting Started](./getting-started.md) -- Install, first dashboard, bundler setup
-- [Architecture](./architecture.md) -- How the package works, runtime and data flow
+- [Getting Started](./getting-started.md) -- Install, first dashboard, bundler setup (React, Web Components, CDN)
+- [Architecture](./architecture.md) -- Monorepo layout, runtime and data flow
 
 ## Guides
 
@@ -22,7 +31,9 @@ Drop-in SQL-powered React components backed by DuckDB-WASM. One package. One pro
 
 | Package | Description |
 |---------|-------------|
-| [@duck_ui/embed](./api/embed.md) | DuckUIProvider, hooks, components, charts, engine |
+| [@duck_ui/core](./api/core.md) | DuckUI class, engine exports, chart factories |
+| [@duck_ui/embed](./api/embed.md) | DuckUIProvider, hooks, React components |
+| [@duck_ui/elements](./api/elements.md) | Custom elements, attributes, events |
 
 ## License
 
