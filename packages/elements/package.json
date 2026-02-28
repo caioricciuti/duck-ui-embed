@@ -1,6 +1,6 @@
 {
   "name": "@duck_ui/elements",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Web Components for DuckDB-WASM dashboards — no framework required",
   "author": "Duck-UI",
   "repository": {

@@ -19,7 +19,7 @@
     },
     "packages/cdn": {
       "name": "@duck_ui/cdn",
-      "version": "0.3.1",
+      "version": "0.3.2",
       "dependencies": {
         "@duck_ui/core": "workspace:*",
         "@duck_ui/elements": "workspace:*",
@@ -27,7 +27,7 @@
     },
     "packages/core": {
       "name": "@duck_ui/core",
-      "version": "0.3.1",
+      "version": "0.3.2",
       "dependencies": {
         "uplot": "^1.6.31",
       },
@@ -37,7 +37,7 @@
     },
     "packages/elements": {
       "name": "@duck_ui/elements",
-      "version": "0.3.1",
+      "version": "0.3.2",
       "dependencies": {
         "@duck_ui/core": "workspace:*",
       },
@@ -47,7 +47,7 @@
     },
     "packages/embed": {
       "name": "@duck_ui/embed",
-      "version": "0.3.1",
+      "version": "0.3.2",
       "dependencies": {
         "@duck_ui/core": "workspace:*",
         "@tanstack/react-table": "^8.21.3",
