@@ -2,6 +2,18 @@
   "name": "@duck_ui/elements",
   "version": "0.3.1",
   "description": "Web Components for DuckDB-WASM dashboards — no framework required",
+  "author": "Duck-UI",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/caioricciuti/duck-ui-embed",
+    "directory": "packages/elements"
+  },
+  "homepage": "https://github.com/caioricciuti/duck-ui-embed",
+  "bugs": "https://github.com/caioricciuti/duck-ui-embed/issues",
+  "keywords": ["duckdb", "web-components", "custom-elements", "dashboard", "sql", "analytics"],
+  "publishConfig": {
+    "access": "public"
+  },
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",

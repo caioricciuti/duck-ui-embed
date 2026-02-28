@@ -2,6 +2,18 @@
   "name": "@duck_ui/core",
   "version": "0.3.1",
   "description": "Pure JS engine for DuckDB-WASM: init, query, cache, charts — no framework required",
+  "author": "Duck-UI",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/caioricciuti/duck-ui-embed",
+    "directory": "packages/core"
+  },
+  "homepage": "https://github.com/caioricciuti/duck-ui-embed",
+  "bugs": "https://github.com/caioricciuti/duck-ui-embed/issues",
+  "keywords": ["duckdb", "wasm", "sql", "analytics", "charts", "dashboard"],
+  "publishConfig": {
+    "access": "public"
+  },
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
