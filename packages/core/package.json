@@ -1,6 +1,6 @@
 {
   "name": "@duck_ui/core",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Pure JS engine for DuckDB-WASM: init, query, cache, charts — no framework required",
   "author": "Duck-UI",
   "repository": {

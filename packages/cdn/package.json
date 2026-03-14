@@ -1,6 +1,6 @@
 {
   "name": "@duck_ui/cdn",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "CDN bundle: <script> tag includes all duck-* elements + DuckUI core",
   "author": "Duck-UI",
   "repository": {

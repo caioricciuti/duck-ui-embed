@@ -125,7 +125,7 @@ export function buildChartOptions({
     plugins.push(tooltipPlugin(tooltipOpts))
   }
 
-  const showLegend = tooltip ? false : legend
+  const showLegend = legend
 
   const chartAxes: uPlot.Axis[] = [
     {
@@ -175,13 +175,6 @@ export function buildChartOptions({
   const hooks: uPlot.Options['hooks'] = {}
 
   if (onPointClick) {
-    hooks.setCursor = [
-      (u: uPlot) => {
-        const idx = u.cursor.idx
-        if (idx == null) return
-      },
-    ]
-
     hooks.drawClear = [
       (u: uPlot) => {
         const el = u.over

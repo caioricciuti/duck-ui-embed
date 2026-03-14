@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect, useCallback, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 import { useDuckInternal } from '../../provider/hooks'
 
 export interface DateRangeFilterProps {
@@ -111,6 +111,44 @@ export function DateRangeFilter({ column, label }: DateRangeFilterProps) {
     setPendingStart(null)
   }, [column, setFilter])
 
+  const handleDayKeyDown = useCallback(
+    (e: ReactKeyboardEvent, dateStr: string) => {
+      const d = parseDate(dateStr)
+      let next: Date | null = null
+
+      switch (e.key) {
+        case 'ArrowLeft': next = new Date(d.getFullYear(), d.getMonth(), d.getDate() - 1); break
+        case 'ArrowRight': next = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1); break
+        case 'ArrowUp': next = new Date(d.getFullYear(), d.getMonth(), d.getDate() - 7); break
+        case 'ArrowDown': next = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 7); break
+        case 'Enter':
+        case ' ':
+          e.preventDefault()
+          handleDayClick(dateStr)
+          return
+        case 'Escape':
+          e.preventDefault()
+          setOpen(false)
+          setPendingStart(null)
+          return
+        default: return
+      }
+
+      e.preventDefault()
+      if (next) {
+        setViewYear(next.getFullYear())
+        setViewMonth(next.getMonth())
+        setHoveredDay(fmtDate(next))
+        // Focus will shift on next render via autoFocus-like behavior
+        requestAnimationFrame(() => {
+          const btn = wrapperRef.current?.querySelector(`[data-date="${fmtDate(next!)}"]`) as HTMLElement | null
+          btn?.focus()
+        })
+      }
+    },
+    [handleDayClick],
+  )
+
   const days = getDaysInMonth(viewYear, viewMonth)
   const firstDay = getFirstDayOfMonth(viewYear, viewMonth)
 
@@ -206,10 +244,12 @@ export function DateRangeFilter({ column, label }: DateRangeFilterProps) {
               return (
                 <button
                   key={day} type="button"
+                  data-date={dateStr}
                   style={{ width: 32, height: 32, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', fontSize: 13, borderRadius: br, cursor: 'pointer', border: 'none', background: bg, color, fontWeight: fw, position: 'relative', transition: 'background 0.1s, color 0.1s', padding: 0, lineHeight: 1 }}
                   onClick={() => handleDayClick(dateStr)}
                   onMouseEnter={() => setHoveredDay(dateStr)}
                   onMouseLeave={() => setHoveredDay(null)}
+                  onKeyDown={(e) => handleDayKeyDown(e, dateStr)}
                 >
                   {day}
                   {isToday && <span style={{ width: 4, height: 4, borderRadius: '50%', background: isSelected ? '#fff' : ACCENT, position: 'absolute', bottom: 2, left: '50%', transform: 'translateX(-50%)' }} />}
@@ -218,9 +258,27 @@ export function DateRangeFilter({ column, label }: DateRangeFilterProps) {
             })}
           </div>
 
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 12, paddingTop: 10, borderTop: `1px solid ${theme.hoverColor}`, gap: 6 }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 12, paddingTop: 10, borderTop: `1px solid ${theme.hoverColor}` }}>
+            {([
+              ['Today', () => { const d = fmtDate(new Date()); return { start: d, end: d } }],
+              ['Last 7 days', () => { const end = new Date(); const start = new Date(); start.setDate(start.getDate() - 6); return { start: fmtDate(start), end: fmtDate(end) } }],
+              ['Last 30 days', () => { const end = new Date(); const start = new Date(); start.setDate(start.getDate() - 29); return { start: fmtDate(start), end: fmtDate(end) } }],
+              ['This month', () => { const now = new Date(); return { start: fmtDate(new Date(now.getFullYear(), now.getMonth(), 1)), end: fmtDate(now) } }],
+              ['This year', () => { const now = new Date(); return { start: fmtDate(new Date(now.getFullYear(), 0, 1)), end: fmtDate(now) } }],
+            ] as [string, () => { start: string; end: string }][]).map(([label, getRange]) => (
+              <button
+                key={label}
+                type="button"
+                style={{ fontSize: 11, color: ACCENT, background: ACCENT_HOVER, border: 'none', cursor: 'pointer', padding: '3px 8px', borderRadius: 4, fontWeight: 500 }}
+                onClick={() => { const range = getRange(); setFilter(column, range); setPendingStart(null); const d = parseDate(range.start); setViewYear(d.getFullYear()); setViewMonth(d.getMonth()) }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 8, gap: 6 }}>
             <button type="button" style={{ fontSize: 12, color: theme.mutedTextColor, background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px 8px', borderRadius: 4 }} onClick={handleClear}>Clear</button>
-            <button type="button" style={{ fontSize: 12, color: ACCENT, background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px 8px', borderRadius: 4, fontWeight: 500 }} onClick={goToToday}>Today</button>
+            <button type="button" style={{ fontSize: 12, color: ACCENT, background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px 8px', borderRadius: 4, fontWeight: 500 }} onClick={goToToday}>Go to today</button>
           </div>
         </div>
       )}

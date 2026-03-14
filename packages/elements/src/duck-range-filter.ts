@@ -62,10 +62,24 @@ const rangeFilterCSS = `
   .range-labels {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     margin-top: 6px;
+    gap: 8px;
+  }
+  .range-input {
+    width: 64px;
+    padding: 2px 6px;
+    font-size: 12px;
+    border: 1px solid var(--duck-border, #e5e7eb);
+    border-radius: 4px;
+    background: var(--duck-bg, #ffffff);
+    color: var(--duck-text, #374151);
+    font-variant-numeric: tabular-nums;
+    text-align: center;
+  }
+  .range-sep {
     font-size: 12px;
     color: var(--duck-muted, #6b7280);
-    font-variant-numeric: tabular-nums;
   }
 `
 
@@ -159,13 +173,37 @@ export class DuckRangeFilterElement extends DuckElement {
 
     this.container.appendChild(this.trackWrapper)
 
-    // Labels
+    // Input fields
     const labelsDiv = document.createElement('div')
     labelsDiv.className = 'range-labels'
-    this.labelLo = document.createElement('span')
-    this.labelHi = document.createElement('span')
-    labelsDiv.appendChild(this.labelLo)
-    labelsDiv.appendChild(this.labelHi)
+
+    const inputLo = document.createElement('input')
+    inputLo.type = 'number'
+    inputLo.className = 'range-input'
+    inputLo.step = String(this.step)
+    inputLo.addEventListener('change', () => {
+      const v = parseFloat(inputLo.value)
+      if (!isNaN(v)) this.commit(v, this.hi)
+    })
+    this.labelLo = inputLo as unknown as HTMLSpanElement
+
+    const sep = document.createElement('span')
+    sep.className = 'range-sep'
+    sep.innerHTML = '&ndash;'
+
+    const inputHi = document.createElement('input')
+    inputHi.type = 'number'
+    inputHi.className = 'range-input'
+    inputHi.step = String(this.step)
+    inputHi.addEventListener('change', () => {
+      const v = parseFloat(inputHi.value)
+      if (!isNaN(v)) this.commit(this.lo, v)
+    })
+    this.labelHi = inputHi as unknown as HTMLSpanElement
+
+    labelsDiv.appendChild(inputLo)
+    labelsDiv.appendChild(sep)
+    labelsDiv.appendChild(inputHi)
     this.container.appendChild(labelsDiv)
 
     this.shadow.appendChild(this.container)
@@ -220,8 +258,11 @@ export class DuckRangeFilterElement extends DuckElement {
     const fmt = (v: number) =>
       Number.isInteger(v) ? v.toLocaleString() : v.toLocaleString(undefined, { maximumFractionDigits: 2 })
 
-    this.labelLo.textContent = fmt(this.lo)
-    this.labelHi.textContent = fmt(this.hi)
+    // Update input values
+    const loInput = this.labelLo as unknown as HTMLInputElement
+    const hiInput = this.labelHi as unknown as HTMLInputElement
+    if (document.activeElement !== loInput) loInput.value = fmt(this.lo)
+    if (document.activeElement !== hiInput) hiInput.value = fmt(this.hi)
 
     // ARIA
     const column = this.getAttribute('column') ?? ''

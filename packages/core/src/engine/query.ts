@@ -1,4 +1,5 @@
 import type * as duckdb from '@duckdb/duckdb-wasm'
+import { QueryTimeoutError } from './errors'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -101,12 +102,22 @@ export class QueryExecutor {
     this.release = handle.release
   }
 
-  async execute(sql: string): Promise<QueryResult> {
+  async execute(sql: string, options?: { timeoutMs?: number }): Promise<QueryResult> {
     const start = performance.now()
     const conn = await this.acquire()
 
     try {
-      const result = await conn.query(sql)
+      const queryPromise = conn.query(sql)
+
+      let result: Awaited<typeof queryPromise>
+      if (options?.timeoutMs) {
+        const timeout = new Promise<never>((_, reject) => {
+          setTimeout(() => reject(new QueryTimeoutError(options.timeoutMs!, sql)), options.timeoutMs)
+        })
+        result = await Promise.race([queryPromise, timeout])
+      } else {
+        result = await queryPromise
+      }
       const executionTime = performance.now() - start
 
       const columns: ColumnInfo[] = result.schema.fields.map((field) => ({

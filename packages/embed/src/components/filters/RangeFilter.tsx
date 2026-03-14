@@ -144,9 +144,42 @@ export function RangeFilter({ column, min, max, step = 1, label }: RangeFilterPr
         />
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6, fontSize: 12, color: theme.mutedTextColor, fontVariantNumeric: 'tabular-nums' }}>
-        <span>{fmt(lo)}</span>
-        <span>{fmt(hi)}</span>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 6, gap: 8 }}>
+        <input
+          type="number"
+          value={lo}
+          min={min}
+          max={hi}
+          step={step}
+          onChange={(e) => {
+            const v = parseFloat(e.target.value)
+            if (!isNaN(v)) commit(v, hi)
+          }}
+          style={{
+            width: 64, padding: '2px 6px', fontSize: 12, border: `1px solid ${theme.borderColor}`,
+            borderRadius: 4, background: theme.background, color: theme.textColor,
+            fontVariantNumeric: 'tabular-nums', textAlign: 'center',
+          }}
+          aria-label={`${label ?? column} minimum value`}
+        />
+        <span style={{ fontSize: 12, color: theme.mutedTextColor }}>&ndash;</span>
+        <input
+          type="number"
+          value={hi}
+          min={lo}
+          max={max}
+          step={step}
+          onChange={(e) => {
+            const v = parseFloat(e.target.value)
+            if (!isNaN(v)) commit(lo, v)
+          }}
+          style={{
+            width: 64, padding: '2px 6px', fontSize: 12, border: `1px solid ${theme.borderColor}`,
+            borderRadius: 4, background: theme.background, color: theme.textColor,
+            fontVariantNumeric: 'tabular-nums', textAlign: 'center',
+          }}
+          aria-label={`${label ?? column} maximum value`}
+        />
       </div>
     </div>
   )

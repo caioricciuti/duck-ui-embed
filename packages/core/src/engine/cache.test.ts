@@ -61,4 +61,51 @@ describe('QueryCache', () => {
     const result = cache.get<Result>('q')
     expect(result?.rows).toEqual(['a', 'b'])
   })
+
+  // New tests for LRU, key normalization, stats
+
+  it('promotes accessed entries (LRU behavior)', () => {
+    cache.set('a', 1)
+    cache.set('b', 2)
+    cache.set('c', 3)
+
+    // Access 'a' to promote it
+    cache.get('a')
+
+    // Insert new entry — should evict 'b' (oldest not-recently-used), not 'a'
+    cache.set('d', 4)
+    expect(cache.get('a')).toBe(1)
+    expect(cache.get('b')).toBeUndefined()
+    expect(cache.get('c')).toBe(3)
+    expect(cache.get('d')).toBe(4)
+  })
+
+  it('normalizes keys (whitespace collapse)', () => {
+    cache.set('SELECT  *  FROM  x', 'result1')
+    expect(cache.get('SELECT * FROM x')).toBe('result1')
+  })
+
+  it('normalizes keys (trim)', () => {
+    cache.set('  SELECT * FROM x  ', 'result1')
+    expect(cache.get('SELECT * FROM x')).toBe('result1')
+  })
+
+  it('invalidate normalizes the key too', () => {
+    cache.set('SELECT * FROM x', 'val')
+    cache.invalidate('  SELECT  *  FROM  x  ')
+    expect(cache.get('SELECT * FROM x')).toBeUndefined()
+  })
+
+  it('stats() returns hit/miss counts', () => {
+    cache.set('a', 1)
+    cache.get('a') // hit
+    cache.get('b') // miss
+
+    const s = cache.stats()
+    expect(s.hits).toBe(1)
+    expect(s.misses).toBe(1)
+    expect(s.size).toBe(1)
+    expect(s.maxSize).toBe(3)
+    expect(s.ttl).toBe(1000)
+  })
 })

@@ -19,7 +19,7 @@ export interface ChartProps extends Omit<UChartProps, 'data' | 'labels' | 'xLabe
 export function Chart({ sql, className, tableName, ...chartOptions }: ChartProps) {
   const { theme } = useDuckInternal()
   const queryOpts: UseQueryOptions | undefined = tableName ? { tableName } : undefined
-  const { data, loading, error } = useQuery(sql, queryOpts)
+  const { data, loading, error, refetch } = useQuery(sql, queryOpts)
 
   const chartResult = useMemo(() => {
     if (!data || data.rowCount === 0) return null
@@ -31,8 +31,8 @@ export function Chart({ sql, className, tableName, ...chartOptions }: ChartProps
     return data.columns.map((c) => c.name)
   }, [data])
 
-  if (loading) return <Loading />
-  if (error) return <ErrorDisplay error={error} />
+  if (loading) return <Loading variant="skeleton-chart" />
+  if (error) return <ErrorDisplay error={error} onRetry={refetch} />
   if (!chartResult) return <EmptyState />
 
   return (

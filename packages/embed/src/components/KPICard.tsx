@@ -40,12 +40,12 @@ export function KPICard({
   const { theme } = useDuckInternal()
   const formatter = resolveFormatter(format, currency)
   const queryOpts: UseQueryOptions | undefined = tableName ? { tableName } : undefined
-  const { data, loading, error } = useQuery(sql, queryOpts)
+  const { data, loading, error, refetch } = useQuery(sql, queryOpts)
   const comparison = useQuery(compareSql ?? 'SELECT NULL', queryOpts)
   const sparkline = useQuery(sparklineSql ?? 'SELECT NULL', queryOpts)
 
-  if (loading) return <Loading />
-  if (error) return <ErrorDisplay error={error} />
+  if (loading) return <Loading variant="skeleton-kpi" />
+  if (error) return <ErrorDisplay error={error} onRetry={refetch} />
 
   const value = data?.rows[0] ? (Object.values(data.rows[0])[0] as number) : 0
   const prevValue = comparison.data?.rows[0]

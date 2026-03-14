@@ -77,6 +77,27 @@ describe('FilterInjector', () => {
       })
       expect(conditions).toHaveLength(2)
     })
+
+    it('builds LIKE condition', () => {
+      const conditions = FilterInjector.buildConditions({
+        name: { like: '%smith%' },
+      })
+      expect(conditions).toEqual([`"name" LIKE '%smith%'`])
+    })
+
+    it('builds ILIKE condition', () => {
+      const conditions = FilterInjector.buildConditions({
+        name: { ilike: '%SMITH%' },
+      })
+      expect(conditions).toEqual([`"name" ILIKE '%SMITH%'`])
+    })
+
+    it('escapes single quotes in LIKE values', () => {
+      const conditions = FilterInjector.buildConditions({
+        name: { like: "%O'Brien%" },
+      })
+      expect(conditions).toEqual([`"name" LIKE '%O''Brien%'`])
+    })
   })
 
   describe('inject', () => {
@@ -102,6 +123,57 @@ describe('FilterInjector', () => {
 
       // Should not have a bare 'orders' reference anymore
       expect(result).toContain('_filtered')
+    })
+  })
+
+  describe('injectAsSubquery', () => {
+    it('returns original SQL when no filters active', () => {
+      const sql = 'SELECT * FROM orders'
+      expect(FilterInjector.injectAsSubquery(sql, {})).toBe(sql)
+    })
+
+    it('wraps entire SQL as subquery with filters', () => {
+      const sql = 'SELECT * FROM orders'
+      const filters: FilterState = { status: 'shipped' }
+      const result = FilterInjector.injectAsSubquery(sql, filters)
+
+      expect(result).toBe(`SELECT * FROM (SELECT * FROM orders) AS _duck_sub WHERE "status" = 'shipped'`)
+    })
+
+    it('works with JOINs', () => {
+      const sql = 'SELECT o.*, c.name FROM orders o JOIN customers c ON o.cid = c.id'
+      const filters: FilterState = { status: 'active' }
+      const result = FilterInjector.injectAsSubquery(sql, filters)
+
+      expect(result).toContain('_duck_sub')
+      expect(result).toContain('JOIN')
+      expect(result).toContain("'active'")
+    })
+
+    it('works with CTEs', () => {
+      const sql = 'WITH top AS (SELECT * FROM orders LIMIT 10) SELECT * FROM top'
+      const filters: FilterState = { total: { min: 0, max: 100 } }
+      const result = FilterInjector.injectAsSubquery(sql, filters)
+
+      expect(result).toContain('_duck_sub')
+      expect(result).toContain('WITH top AS')
+      expect(result).toContain('"total" >= 0 AND "total" <= 100')
+    })
+
+    it('skips null and undefined filter values', () => {
+      const sql = 'SELECT * FROM orders'
+      const filters: FilterState = { status: null, name: undefined as unknown as null }
+      expect(FilterInjector.injectAsSubquery(sql, filters)).toBe(sql)
+    })
+
+    it('combines multiple filters with AND', () => {
+      const sql = 'SELECT * FROM orders'
+      const filters: FilterState = { status: 'active', total: { min: 10, max: 100 } }
+      const result = FilterInjector.injectAsSubquery(sql, filters)
+
+      expect(result).toContain('AND')
+      expect(result).toContain("'active'")
+      expect(result).toContain('"total" >= 10')
     })
   })
 })

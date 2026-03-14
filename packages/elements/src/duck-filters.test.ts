@@ -55,16 +55,16 @@ describe('DuckRangeFilterElement', () => {
     document.body.removeChild(el)
   })
 
-  it('shows min/max labels', () => {
+  it('shows min/max input fields', () => {
     const el = document.createElement('duck-range-filter') as DuckRangeFilterElement
     el.setAttribute('column', 'price')
     el.setAttribute('min', '0')
     el.setAttribute('max', '1000')
     document.body.appendChild(el)
-    const labels = el.shadowRoot!.querySelectorAll('.range-labels span')
-    expect(labels[0]?.textContent).toBe('0')
+    const inputs = el.shadowRoot!.querySelectorAll('.range-labels .range-input') as NodeListOf<HTMLInputElement>
+    expect(inputs[0]?.value).toBe('0')
     // toLocaleString may not add commas in jsdom
-    expect(labels[1]?.textContent).toMatch(/1,?000/)
+    expect(inputs[1]?.value).toMatch(/1,?000/)
     document.body.removeChild(el)
   })
 })

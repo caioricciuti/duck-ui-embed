@@ -37,10 +37,10 @@ function createMockContext(overrides: Partial<DuckUIContextValue> = {}): DuckUIC
     error: null,
     filters: {},
     setFilter: vi.fn(),
+    setFilters: vi.fn(),
     clearFilters: vi.fn(),
     filterVersion: 0,
     tableNames: ['orders'],
-    license: null,
     theme: lightTheme,
     ...overrides,
   }
@@ -80,14 +80,16 @@ describe('KPICard', () => {
     })
   })
 
-  it('shows loading state when engine not ready', () => {
+  it('shows skeleton loading state when engine not ready', () => {
     const ctx = createMockContext({ status: 'loading', executor: null })
 
-    renderWithContext(
+    const { container } = renderWithContext(
       <KPICard sql="SELECT 1" label="Test" />,
       ctx
     )
 
-    expect(screen.getByText('Loading...')).toBeInTheDocument()
+    // Skeleton KPI renders animated placeholder divs instead of "Loading..." text
+    const skeletonBlocks = container.querySelectorAll('[style*="duck-ui-pulse"]')
+    expect(skeletonBlocks.length).toBeGreaterThan(0)
   })
 })

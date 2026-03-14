@@ -285,6 +285,7 @@ export class DuckTableElement extends DuckElement {
 
     // Table
     const table = document.createElement('table')
+    table.setAttribute('role', 'grid')
 
     // Total width
     const totalWidth = this.columns.reduce((sum, col) => sum + (this.columnWidths[col.name] ?? 150), 0)
@@ -302,6 +303,10 @@ export class DuckTableElement extends DuckElement {
       if (sortable) {
         th.className = 'sortable'
         th.addEventListener('click', () => this.handleSort(col.name))
+        const isSorted = this.orderBy?.column === col.name
+        if (isSorted) {
+          th.setAttribute('aria-sort', this.orderBy!.direction === 'asc' ? 'ascending' : 'descending')
+        }
       }
 
       const content = document.createElement('span')
@@ -387,6 +392,7 @@ export class DuckTableElement extends DuckElement {
 
     const info = document.createElement('span')
     info.className = 'info'
+    info.setAttribute('aria-live', 'polite')
     info.innerHTML = `Showing ${rangeStart}&ndash;${rangeEnd} of ${this.totalRows.toLocaleString()} rows`
     bar.appendChild(info)
 
@@ -422,6 +428,7 @@ export class DuckTableElement extends DuckElement {
     const prevBtn = document.createElement('button')
     prevBtn.textContent = 'Previous'
     prevBtn.disabled = !canPrev
+    prevBtn.setAttribute('aria-label', 'Go to previous page')
     prevBtn.addEventListener('click', () => {
       if (canPrev) {
         this.pageIndex--
@@ -434,6 +441,7 @@ export class DuckTableElement extends DuckElement {
     const nextBtn = document.createElement('button')
     nextBtn.textContent = 'Next'
     nextBtn.disabled = !canNext
+    nextBtn.setAttribute('aria-label', 'Go to next page')
     nextBtn.addEventListener('click', () => {
       if (canNext) {
         this.pageIndex++

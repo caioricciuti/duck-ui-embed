@@ -1,6 +1,6 @@
 {
   "name": "@duck_ui/embed",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "description": "Drop-in SQL-powered React components backed by DuckDB-WASM",
   "author": "Duck-UI",
   "repository": {

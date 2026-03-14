@@ -18,6 +18,8 @@ export interface DuckUIContextValue {
   filters: Record<string, FilterValue>
   /** Set a filter value */
   setFilter: (column: string, value: FilterValue) => void
+  /** Set multiple filters at once (single version bump) */
+  setFilters: (filters: Record<string, FilterValue>) => void
   /** Clear all filters */
   clearFilters: () => void
   /** Filter change counter (for re-execution) */

@@ -78,7 +78,7 @@ export function DataTable({
   const [columnResizeMode] = useState<ColumnResizeMode>('onChange')
   const [hoveredResizer, setHoveredResizer] = useState<string | null>(null)
 
-  const { rows, columns: queryColumns, totalRows, loading, error } =
+  const { rows, columns: queryColumns, totalRows, loading, error, refetch } =
     usePaginatedQuery(sql, {
       page: pageIndex,
       pageSize: currentPageSize,
@@ -127,8 +127,8 @@ export function DataTable({
     return vars
   }, [table.getState().columnSizingInfo, table.getState().columnSizing])
 
-  if (loading && rows.length === 0) return <Loading />
-  if (error) return <ErrorDisplay error={error} />
+  if (loading && rows.length === 0) return <Loading variant="skeleton-table" />
+  if (error) return <ErrorDisplay error={error} onRetry={refetch} />
   if (!loading && rows.length === 0 && totalRows === 0) return <EmptyState />
 
   const pageCount = Math.max(1, Math.ceil(totalRows / currentPageSize))
@@ -255,6 +255,7 @@ export function DataTable({
         } as React.CSSProperties}
       >
         <table
+          role="grid"
           style={{
             width: table.getTotalSize(),
             minWidth: '100%',
@@ -282,6 +283,7 @@ export function DataTable({
                         cursor: sortable ? 'pointer' : 'default',
                       }}
                       onClick={sortable ? () => handleSort(header.column.id) : undefined}
+                      aria-sort={isSorted ? (sortDir === 'asc' ? 'ascending' : 'descending') : undefined}
                     >
                       <span
                         style={{
@@ -365,7 +367,7 @@ export function DataTable({
 
       {totalRows > 0 && (
         <div style={paginationBarStyle}>
-          <span style={{ color: theme.mutedTextColor }}>
+          <span style={{ color: theme.mutedTextColor }} aria-live="polite">
             Showing {rangeStart}&ndash;{rangeEnd} of{' '}
             {totalRows.toLocaleString()} rows
           </span>
@@ -411,6 +413,7 @@ export function DataTable({
             <button
               onClick={() => setPageIndex((p) => Math.max(0, p - 1))}
               disabled={!canPreviousPage}
+              aria-label="Go to previous page"
               style={{
                 ...paginationButtonStyle,
                 opacity: canPreviousPage ? 1 : 0.5,
@@ -422,6 +425,7 @@ export function DataTable({
             <button
               onClick={() => setPageIndex((p) => Math.min(pageCount - 1, p + 1))}
               disabled={!canNextPage}
+              aria-label="Go to next page"
               style={{
                 ...paginationButtonStyle,
                 opacity: canNextPage ? 1 : 0.5,

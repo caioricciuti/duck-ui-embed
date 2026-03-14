@@ -119,7 +119,7 @@ export class DuckUI {
     // Apply active filters if any
     const hasFilters = Object.values(this._filters).some((v) => v !== null && v !== undefined)
     const finalSql = hasFilters
-      ? FilterInjector.inject(sql, this._filters, '_sub')
+      ? FilterInjector.injectAsSubquery(sql, this._filters)
       : sql
 
     // Check cache
@@ -138,6 +138,12 @@ export class DuckUI {
   /** Set a filter value for a column. Pass null to clear. */
   setFilter(column: string, value: FilterValue): void {
     this._filters = { ...this._filters, [column]: value }
+    this._filterVersion++
+  }
+
+  /** Set multiple filters at once (single version bump). */
+  setFilters(filters: Record<string, FilterValue>): void {
+    this._filters = { ...this._filters, ...filters }
     this._filterVersion++
   }
 

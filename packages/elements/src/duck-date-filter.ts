@@ -440,6 +440,8 @@ export class DuckDateFilterElement extends DuckElement {
         btn.appendChild(dot)
       }
 
+      btn.setAttribute('data-date', dateStr)
+      btn.tabIndex = 0
       btn.addEventListener('click', () => this.handleDayClick(dateStr))
       btn.addEventListener('mouseenter', () => {
         this.hoveredDay = dateStr
@@ -448,11 +450,49 @@ export class DuckDateFilterElement extends DuckElement {
       btn.addEventListener('mouseleave', () => {
         this.hoveredDay = null
       })
+      btn.addEventListener('keydown', (e) => this.handleDayKeyDown(e, dateStr))
 
       daysGrid.appendChild(btn)
     }
 
     cal.appendChild(daysGrid)
+
+    // Presets
+    const presetsDiv = document.createElement('div')
+    presetsDiv.className = 'calendar-footer'
+    presetsDiv.style.flexWrap = 'wrap'
+    presetsDiv.style.justifyContent = 'flex-start'
+
+    const presets: [string, () => { start: string; end: string }][] = [
+      ['Today', () => { const d = fmtDate(new Date()); return { start: d, end: d } }],
+      ['Last 7 days', () => { const end = new Date(); const s = new Date(); s.setDate(s.getDate() - 6); return { start: fmtDate(s), end: fmtDate(end) } }],
+      ['Last 30 days', () => { const end = new Date(); const s = new Date(); s.setDate(s.getDate() - 29); return { start: fmtDate(s), end: fmtDate(end) } }],
+      ['This month', () => { const now = new Date(); return { start: fmtDate(new Date(now.getFullYear(), now.getMonth(), 1)), end: fmtDate(now) } }],
+      ['This year', () => { const now = new Date(); return { start: fmtDate(new Date(now.getFullYear(), 0, 1)), end: fmtDate(now) } }],
+    ]
+
+    for (const [label, getRange] of presets) {
+      const btn = document.createElement('button')
+      btn.type = 'button'
+      btn.className = 'footer-btn today'
+      btn.style.fontSize = '11px'
+      btn.textContent = label
+      btn.addEventListener('click', () => {
+        const column = this.getAttribute('column')
+        if (!column) return
+        const range = getRange()
+        this.getProvider()?.setFilter(column, range)
+        this.pendingStart = null
+        const d = parseDate(range.start)
+        this.viewYear = d.getFullYear()
+        this.viewMonth = d.getMonth()
+        this.updateTrigger()
+        this.renderCalendar()
+      })
+      presetsDiv.appendChild(btn)
+    }
+
+    cal.appendChild(presetsDiv)
 
     // Footer
     const footer = document.createElement('div')
@@ -467,7 +507,7 @@ export class DuckDateFilterElement extends DuckElement {
     const todayBtn = document.createElement('button')
     todayBtn.type = 'button'
     todayBtn.className = 'footer-btn today'
-    todayBtn.textContent = 'Today'
+    todayBtn.textContent = 'Go to today'
     todayBtn.addEventListener('click', () => {
       this.viewYear = today.getFullYear()
       this.viewMonth = today.getMonth()
@@ -522,6 +562,39 @@ export class DuckDateFilterElement extends DuckElement {
       this.viewMonth--
     }
     this.renderCalendar()
+  }
+
+  private handleDayKeyDown(e: KeyboardEvent, dateStr: string): void {
+    const d = parseDate(dateStr)
+    let next: Date | null = null
+
+    switch (e.key) {
+      case 'ArrowLeft': next = new Date(d.getFullYear(), d.getMonth(), d.getDate() - 1); break
+      case 'ArrowRight': next = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 1); break
+      case 'ArrowUp': next = new Date(d.getFullYear(), d.getMonth(), d.getDate() - 7); break
+      case 'ArrowDown': next = new Date(d.getFullYear(), d.getMonth(), d.getDate() + 7); break
+      case 'Enter':
+      case ' ':
+        e.preventDefault()
+        this.handleDayClick(dateStr)
+        return
+      case 'Escape':
+        e.preventDefault()
+        this.closeCalendar()
+        return
+      default: return
+    }
+
+    e.preventDefault()
+    if (next) {
+      this.viewYear = next.getFullYear()
+      this.viewMonth = next.getMonth()
+      this.renderCalendar()
+      requestAnimationFrame(() => {
+        const btn = this.calendarEl?.querySelector(`[data-date="${fmtDate(next!)}"]`) as HTMLElement | null
+        btn?.focus()
+      })
+    }
   }
 
   private goToNextMonth(): void {

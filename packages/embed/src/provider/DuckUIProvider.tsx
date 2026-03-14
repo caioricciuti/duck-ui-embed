@@ -56,6 +56,23 @@ export function DuckUIProvider({
     ...userTheme,
   }
 
+  // Stable data reference: only re-run init when table keys or DataInput references actually change
+  const dataRef = useRef(data)
+  const stableData = (() => {
+    const prev = dataRef.current
+    const prevKeys = Object.keys(prev).sort()
+    const nextKeys = Object.keys(data).sort()
+    if (
+      prevKeys.length === nextKeys.length &&
+      prevKeys.every((k, i) => k === nextKeys[i]) &&
+      nextKeys.every((k) => prev[k] === data[k])
+    ) {
+      return prev
+    }
+    dataRef.current = data
+    return data
+  })()
+
   // Initialize engine and load data
   useEffect(() => {
     let cancelled = false
@@ -128,7 +145,7 @@ export function DuckUIProvider({
     return () => {
       cancelled = true
     }
-  }, [data])
+  }, [stableData])
 
   // Cleanup on unmount
   useEffect(() => {
@@ -155,6 +172,7 @@ export function DuckUIProvider({
     error,
     filters: filterState.filters,
     setFilter: filterState.setFilter,
+    setFilters: filterState.setFilters,
     clearFilters: filterState.clearFilters,
     filterVersion: filterState.filterVersion,
     tableNames,

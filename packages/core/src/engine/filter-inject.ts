@@ -6,6 +6,8 @@ export type FilterValue =
   | number[]
   | { min: number; max: number }
   | { start: string; end: string }
+  | { like: string }
+  | { ilike: string }
   | null
 
 export interface FilterState {
@@ -25,6 +27,10 @@ function escapeRegExp(str: string): string {
 }
 
 export class FilterInjector {
+  /**
+   * @deprecated Use `injectAsSubquery` instead — it wraps the entire SQL
+   * as a subquery and does not require a tableName.
+   */
   static inject(sql: string, filters: FilterState, tableName: string): string {
     const conditions = FilterInjector.buildConditions(filters)
     if (conditions.length === 0) return sql
@@ -36,6 +42,18 @@ export class FilterInjector {
       new RegExp(`\\b${escapeRegExp(tableName)}\\b`, 'gi'),
       `(SELECT * FROM ${quotedTable} WHERE ${whereClause}) AS _filtered`
     )}) AS _result`
+  }
+
+  /**
+   * Wrap the entire user SQL as a subquery and apply filter conditions.
+   * No tableName needed — works with JOINs, CTEs, and arbitrary SQL.
+   */
+  static injectAsSubquery(sql: string, filters: FilterState): string {
+    const conditions = FilterInjector.buildConditions(filters)
+    if (conditions.length === 0) return sql
+
+    const whereClause = conditions.join(' AND ')
+    return `SELECT * FROM (${sql}) AS _duck_sub WHERE ${whereClause}`
   }
 
   static buildConditions(filters: FilterState): string[] {
@@ -52,6 +70,10 @@ export class FilterInjector {
           typeof v === 'string' ? `'${escapeString(v)}'` : v
         )
         conditions.push(`${col} IN (${escaped.join(', ')})`)
+      } else if (typeof value === 'object' && 'like' in value) {
+        conditions.push(`${col} LIKE '${escapeString(value.like)}'`)
+      } else if (typeof value === 'object' && 'ilike' in value) {
+        conditions.push(`${col} ILIKE '${escapeString(value.ilike)}'`)
       } else if (typeof value === 'object' && 'min' in value && 'max' in value) {
         conditions.push(`${col} >= ${value.min} AND ${col} <= ${value.max}`)
       } else if (typeof value === 'object' && 'start' in value && 'end' in value) {

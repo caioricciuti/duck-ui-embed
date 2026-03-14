@@ -48,6 +48,7 @@ export interface UseQueryResult {
   loading: boolean
   error: Error | null
   refetch: () => void
+  invalidate: () => void
 }
 
 export function useQuery(sql: string, options?: UseQueryOptions): UseQueryResult {
@@ -59,10 +60,8 @@ export function useQuery(sql: string, options?: UseQueryOptions): UseQueryResult
       Object.entries(filters).filter(([_, v]) => v !== null && v !== undefined)
     )
     if (Object.keys(activeFilters).length === 0) return sql
-    const table = options?.tableName ?? tableNames[0]
-    if (!table) return sql
-    return FilterInjector.inject(sql, activeFilters, table)
-  }, [sql, filters, options?.tableName, options?.noFilter, tableNames])
+    return FilterInjector.injectAsSubquery(sql, activeFilters)
+  }, [sql, filters, options?.noFilter])
 
   const [data, setData] = useState<QueryResult | null>(null)
   const [loading, setLoading] = useState(true)
@@ -100,7 +99,14 @@ export function useQuery(sql: string, options?: UseQueryOptions): UseQueryResult
     execute()
   }, [execute])
 
-  return { data, loading, error, refetch: execute }
+  const invalidate = useCallback(() => {
+    if (cache) {
+      cache.invalidate(effectiveSql)
+    }
+    execute()
+  }, [cache, effectiveSql, execute])
+
+  return { data, loading, error, refetch: execute, invalidate }
 }
 
 // ---------------------------------------------------------------------------
@@ -136,10 +142,8 @@ export function usePaginatedQuery(
       Object.entries(filters).filter(([_, v]) => v !== null && v !== undefined)
     )
     if (Object.keys(activeFilters).length === 0) return sql
-    const table = options.tableName ?? tableNames[0]
-    if (!table) return sql
-    return FilterInjector.inject(sql, activeFilters, table)
-  }, [sql, filters, options.tableName, options.noFilter, tableNames])
+    return FilterInjector.injectAsSubquery(sql, activeFilters)
+  }, [sql, filters, options.noFilter])
 
   const countSql = useMemo(
     () => `SELECT COUNT(*) AS _total FROM (${baseSql}) AS _count_base`,
@@ -205,12 +209,14 @@ export function useSchema(tableName?: string) {
   const [tables, setTables] = useState<string[]>([])
   const [schema, setSchema] = useState<TableSchema | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<Error | null>(null)
 
   useEffect(() => {
     if (!inspector || status !== 'ready') return
 
     const load = async () => {
       setLoading(true)
+      setError(null)
       try {
         const tableList = await inspector.getTables()
         setTables(tableList)
@@ -219,6 +225,8 @@ export function useSchema(tableName?: string) {
           const tableSchema = await inspector.getTableSchema(tableName)
           setSchema(tableSchema)
         }
+      } catch (err) {
+        setError(err instanceof Error ? err : new Error(String(err)))
       } finally {
         setLoading(false)
       }
@@ -227,5 +235,5 @@ export function useSchema(tableName?: string) {
     load()
   }, [inspector, status, tableName])
 
-  return { tables, schema, loading }
+  return { tables, schema, loading, error }
 }

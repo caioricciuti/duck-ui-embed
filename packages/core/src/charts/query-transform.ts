@@ -1,17 +1,20 @@
 import type { QueryResult } from '../engine/query'
 
 export interface ChartDataResult {
-  data: [number[], ...number[][]]
+  data: [number[], ...(number | null)[][]]
   xLabels?: string[]
+  warnings: string[]
 }
 
 /**
  * Transform a QueryResult into uPlot-ready chart data.
- * First column → x-axis, remaining columns → y-series.
+ * First column -> x-axis, remaining columns -> y-series.
+ * Non-numeric Y values become `null` (uPlot renders gaps natively).
  */
 export function queryResultToChartData(result: QueryResult): ChartDataResult {
   const columns = result.columns
-  if (columns.length < 2) return { data: [[]] }
+  const warnings: string[] = []
+  if (columns.length < 2) return { data: [[]], warnings }
 
   const firstColValues = result.rows.map((row) => row[columns[0].name])
   const isCategorical = firstColValues.some((v) => typeof v === 'string')
@@ -26,15 +29,26 @@ export function queryResultToChartData(result: QueryResult): ChartDataResult {
     xValues = firstColValues.map((v) => (typeof v === 'number' ? v : 0))
   }
 
-  const series = columns.slice(1).map((col) =>
-    result.rows.map((row) => {
+  const series = columns.slice(1).map((col) => {
+    let nonNumericCount = 0
+    const values = result.rows.map((row) => {
       const val = row[col.name]
-      return typeof val === 'number' ? val : 0
+      if (typeof val === 'number') return val
+      if (val === null || val === undefined) return null
+      nonNumericCount++
+      return null
     })
-  )
+    if (nonNumericCount > 0) {
+      warnings.push(
+        `Column "${col.name}" has ${nonNumericCount} non-numeric value${nonNumericCount > 1 ? 's' : ''} rendered as gaps.`
+      )
+    }
+    return values
+  })
 
   return {
-    data: [xValues, ...series] as [number[], ...number[][]],
+    data: [xValues, ...series] as [number[], ...(number | null)[][]],
     xLabels,
+    warnings,
   }
 }

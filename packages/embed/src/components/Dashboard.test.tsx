@@ -24,10 +24,10 @@ function createMockContext(overrides: Partial<DuckUIContextValue> = {}): DuckUIC
     error: null,
     filters: {},
     setFilter: vi.fn(),
+    setFilters: vi.fn(),
     clearFilters: vi.fn(),
     filterVersion: 0,
     tableNames: [],
-    license: null,
     theme: lightTheme,
     ...overrides,
   }
