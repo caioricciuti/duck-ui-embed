@@ -1,11 +1,11 @@
 {
   "name": "@duck_ui/cdn",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "CDN bundle: <script> tag includes all duck-* elements + DuckUI core",
   "author": "Duck-UI",
   "repository": {
     "type": "git",
-    "url": "https://github.com/caioricciuti/duck-ui-embed",
+    "url": "git+https://github.com/caioricciuti/duck-ui-embed.git",
     "directory": "packages/cdn"
   },
   "homepage": "https://github.com/caioricciuti/duck-ui-embed",

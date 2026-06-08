@@ -1,11 +1,11 @@
 {
   "name": "@duck_ui/elements",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "Web Components for DuckDB-WASM dashboards — no framework required",
   "author": "Duck-UI",
   "repository": {
     "type": "git",
-    "url": "https://github.com/caioricciuti/duck-ui-embed",
+    "url": "git+https://github.com/caioricciuti/duck-ui-embed.git",
     "directory": "packages/elements"
   },
   "homepage": "https://github.com/caioricciuti/duck-ui-embed",
