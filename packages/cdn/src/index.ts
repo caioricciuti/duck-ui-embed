@@ -3,10 +3,12 @@ import { register } from '@duck_ui/elements'
 // Re-export everything from core and elements
 export { DuckUI } from '@duck_ui/core'
 export type { DataInput, QueryResult, DuckTheme, ChartTheme } from '@duck_ui/core'
-export { lightTheme, darkTheme } from '@duck_ui/core'
+export { lightTheme, darkTheme, encodeShare, decodeShare, extractShareParam } from '@duck_ui/core'
+export type { SharePayload } from '@duck_ui/core'
 
 export {
   DuckProviderElement,
+  DuckEmbedElement,
   DuckChartElement,
   DuckTableElement,
   DuckKPIElement,

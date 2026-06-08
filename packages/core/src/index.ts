@@ -57,3 +57,13 @@ export { detectFilterType } from './utils/detect-filter'
 export type { FilterType } from './utils/detect-filter'
 export { observeSize } from './utils/observe-size'
 export type { Size } from './utils/observe-size'
+
+// Share codec — single source of truth for Duck-UI shareable analysis links
+export {
+  encodeShare,
+  decodeShare,
+  extractShareParam,
+  SHARE_VERSION,
+  SHARE_HASH_KEY,
+} from './share/codec'
+export type { SharePayload, SharedChartConfig, SharedNotebookCell, SharedParam } from './share/codec'

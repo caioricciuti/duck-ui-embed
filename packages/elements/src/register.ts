@@ -8,9 +8,11 @@ import { DuckSelectFilterElement } from './duck-select-filter'
 import { DuckRangeFilterElement } from './duck-range-filter'
 import { DuckDateFilterElement } from './duck-date-filter'
 import { DuckExportElement } from './duck-export'
+import { DuckEmbedElement } from './duck-embed'
 
 const elements: [string, CustomElementConstructor][] = [
   ['duck-provider', DuckProviderElement],
+  ['duck-embed', DuckEmbedElement],
   ['duck-chart', DuckChartElement],
   ['duck-table', DuckTableElement],
   ['duck-kpi', DuckKPIElement],
